@@ -34,13 +34,44 @@
     background: linear-gradient(180deg, var(--ceu-1) 0%, var(--ceu-2) 55%, var(--ceu-3) 100%);
   }
 
-  #sol {
+  #ceu-noite {
     position: absolute;
-    top: 5vh;
+    inset: 0;
+    background: linear-gradient(180deg, #0b1130 0%, #171c4a 55%, #2a2f5e 100%);
+    opacity: 0;
+    transition: opacity 3s ease;
+    pointer-events: none;
+  }
+
+  #ceu-noite.visivel { opacity: 1; }
+
+  .estrela {
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    animation: brilha-estrela 2.6s ease-in-out infinite;
+  }
+
+  @keyframes brilha-estrela {
+    0%, 100% { opacity: .25; }
+    50%      { opacity: 1; }
+  }
+
+  #sol, #lua {
+    position: absolute;
     right: 7vw;
     width: 13vh;
     height: 13vh;
     border-radius: 50%;
+    transition: top 1.5s cubic-bezier(.3,.85,.4,1);
+    touch-action: none;
+  }
+
+  #sol.arrastando, #lua.arrastando { transition: none; }
+  #sol.transicionando, #lua.transicionando { transition: top 3s ease-in-out; }
+
+  #sol {
+    top: 5vh;
     background: radial-gradient(circle at 40% 35%, #fff8b0, #ffd34d 60%, #ffb327);
     box-shadow: 0 0 60px 24px rgba(255, 214, 92, .45);
     animation: pulsa 6s ease-in-out infinite;
@@ -49,6 +80,40 @@
   @keyframes pulsa {
     50% { transform: scale(1.06); }
   }
+
+  #lua {
+    top: 92vh;
+    overflow: hidden;
+    background: radial-gradient(circle at 35% 30%, #fdfdff, #e4e6f2 55%, #c7cbe0 100%);
+    box-shadow: 0 0 40px 16px rgba(200, 210, 255, .35);
+  }
+
+  #lua .sombra {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    border-radius: 50%;
+    background: #141a3d;
+  }
+
+  #lua[data-fase="nova"]      .sombra { transform: translateX(2%);    opacity: .88; }
+  #lua[data-fase="crescente"] .sombra { transform: translateX(-38%); }
+  #lua[data-fase="cheia"]     .sombra { transform: translateX(-100%); }
+  #lua[data-fase="minguante"] .sombra { transform: translateX(38%); }
+
+  body.noite .nuvem {
+    opacity: .3;
+    filter: brightness(.6);
+  }
+
+  .nuvem { transition: opacity 3s ease, filter 3s ease; }
+
+  body.noite #morro, body.noite #morro2 {
+    filter: brightness(.55);
+  }
+
+  #morro, #morro2 { transition: filter 3s ease; }
 
   .nuvem {
     position: absolute;
@@ -306,7 +371,9 @@
 </style>
 
 <div id="ceu">
+  <div id="ceu-noite"></div>
   <div id="sol"></div>
+  <div id="lua"><div class="sombra"></div></div>
   <div class="nuvem" style="width:200px;height:60px;top:12vh;animation-duration:70s"></div>
   <div class="nuvem" style="width:140px;height:44px;top:28vh;animation-duration:95s;animation-delay:-30s"></div>
   <div class="nuvem" style="width:260px;height:74px;top:6vh;animation-duration:120s;animation-delay:-70s;opacity:.75"></div>
@@ -330,10 +397,13 @@
 (() => {
   "use strict";
 
-  const palco   = document.getElementById('palco');
-  const abelha  = document.getElementById('abelha');
-  const ui      = document.getElementById('ui');
-  const dica    = document.getElementById('dica');
+  const palco    = document.getElementById('palco');
+  const abelha   = document.getElementById('abelha');
+  const ui       = document.getElementById('ui');
+  const dica     = document.getElementById('dica');
+  const sol      = document.getElementById('sol');
+  const lua      = document.getElementById('lua');
+  const ceuNoite = document.getElementById('ceu-noite');
   const ehSegunda = new URLSearchParams(location.search).get('tela') === '2';
 
   const MAX_BALOES  = 25;
@@ -349,6 +419,10 @@
     for (const b of baloes) {
       b.alvoY = clamp(b.alvoY, H * 0.30, H * 0.58);
       b.x = clamp(b.x, 80, W - 80);
+    }
+    if (!arrastoAlvo && !transicionando) {
+      sol.style.top = (periodo === 'dia'   ? topoCima() : topoBaixo()) + 'px';
+      lua.style.top = (periodo === 'noite' ? topoCima() : topoBaixo()) + 'px';
     }
   });
 
@@ -682,6 +756,152 @@
     }
   }
 
+  // ------------------------------------------------------------------ sol e lua
+
+  // ordem real das fases: nova -> crescente -> cheia -> minguante -> nova...
+  const FASES = ['nova', 'crescente', 'cheia', 'minguante'];
+  let faseIndex = -1;
+
+  const TOPO_CIMA  = 0.05; // fração da altura da tela — posição no céu
+  const TOPO_BAIXO = 0.94; // fração da altura da tela — escondido atrás do morro
+
+  function topoCima()  { return H * TOPO_CIMA; }
+  function topoBaixo() { return H * TOPO_BAIXO; }
+
+  (function gerarEstrelas() {
+    for (let i = 0; i < 55; i++) {
+      const el = document.createElement('div');
+      el.className = 'estrela';
+      const t = rand(1, 3);
+      el.style.width = t + 'px';
+      el.style.height = t + 'px';
+      el.style.left = rand(2, 98) + '%';
+      el.style.top = rand(2, 68) + '%';
+      el.style.animationDelay = rand(0, 2.6) + 's';
+      ceuNoite.appendChild(el);
+    }
+  })();
+
+  sol.style.top = topoCima() + 'px';
+  lua.style.top = topoBaixo() + 'px';
+
+  let periodo = 'dia';    // 'dia' | 'noite'
+  let transicionando = false;
+  let arrastoAlvo = null;
+  let arrastoInicioY = 0;
+  let arrastoInicioTop = 0;
+
+  function podeArrastar(el) {
+    if (transicionando) return false;
+    if (el === sol) return periodo === 'dia';
+    if (el === lua) return periodo === 'noite';
+    return false;
+  }
+
+  function iniciaArrasto(el, e) {
+    if (!podeArrastar(el)) return;
+    e.stopPropagation();
+    audio();
+    escondeDica();
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('arrastando');
+    arrastoAlvo = el;
+    arrastoInicioY = e.clientY;
+    arrastoInicioTop = parseFloat(el.style.top) || topoCima();
+  }
+
+  sol.addEventListener('pointerdown', e => iniciaArrasto(sol, e));
+  lua.addEventListener('pointerdown', e => iniciaArrasto(lua, e));
+
+  function moveArrasto(e) {
+    if (!arrastoAlvo) return;
+    const dy = e.clientY - arrastoInicioY;
+    const novo = clamp(arrastoInicioTop + dy, topoCima(), topoBaixo());
+    arrastoAlvo.style.top = novo + 'px';
+  }
+
+  function terminaArrasto(e) {
+    if (!arrastoAlvo) return;
+    const el = arrastoAlvo;
+    try { el.releasePointerCapture(e.pointerId); } catch (err) { /* ignora */ }
+    el.classList.remove('arrastando');
+    arrastoAlvo = null;
+
+    const topAtual = parseFloat(el.style.top);
+    const progresso = (topAtual - topoCima()) / (topoBaixo() - topoCima());
+
+    if (progresso > 0.5) {
+      comitarTransicao(el === sol ? 'noite' : 'dia');
+    } else {
+      el.style.top = topoCima() + 'px';
+    }
+  }
+
+  addEventListener('pointerup', terminaArrasto);
+  addEventListener('pointercancel', terminaArrasto);
+
+  function comitarTransicao(novoPeriodo) {
+    transicionando = true;
+
+    const saindo   = novoPeriodo === 'noite' ? sol : lua;
+    const entrando = novoPeriodo === 'noite' ? lua : sol;
+
+    saindo.classList.add('transicionando');
+    entrando.classList.add('transicionando');
+
+    saindo.style.top = topoBaixo() + 'px';
+
+    if (novoPeriodo === 'noite') {
+      faseIndex = (faseIndex + 1) % FASES.length;
+      lua.dataset.fase = FASES[faseIndex];
+    }
+
+    entrando.style.top = topoCima() + 'px';
+    ceuNoite.classList.toggle('visivel', novoPeriodo === 'noite');
+    document.body.classList.toggle('noite', novoPeriodo === 'noite');
+    somTransicao(novoPeriodo);
+
+    periodo = novoPeriodo;
+    setTimeout(() => {
+      transicionando = false;
+      saindo.classList.remove('transicionando');
+      entrando.classList.remove('transicionando');
+    }, 3000);
+  }
+
+  function somTransicao(direcao) {
+    if (!audio()) return;
+    const t = ac.currentTime;
+    const dur = 3.0;
+    const base = direcao === 'noite' ? 130 : 220;
+
+    const filtro = ac.createBiquadFilter();
+    filtro.type = 'lowpass';
+    filtro.frequency.setValueAtTime(base * 2, t);
+    filtro.frequency.linearRampToValueAtTime(base * 7, t + dur);
+
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22, t + dur * 0.7);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.5);
+
+    const o1 = ac.createOscillator();
+    o1.type = 'sine';
+    o1.frequency.setValueAtTime(base, t);
+    o1.frequency.linearRampToValueAtTime(base * 1.7, t + dur);
+
+    const o2 = ac.createOscillator();
+    o2.type = 'triangle';
+    o2.frequency.setValueAtTime(base * 1.5, t);
+    o2.frequency.linearRampToValueAtTime(base * 1.5 * 1.7, t + dur);
+
+    o1.connect(filtro); o2.connect(filtro);
+    filtro.connect(g); g.connect(master);
+    o1.start(t); o2.start(t);
+    o1.stop(t + dur + 0.6);
+    o2.stop(t + dur + 0.6);
+  }
+
   // ------------------------------------------------------------------ loop
 
   let t = 0, ultimo = performance.now();
@@ -786,6 +1006,8 @@
   });
 
   addEventListener('pointermove', e => {
+    moveArrasto(e);
+
     abelha.classList.add('visivel');
     ax = e.clientX; ay = e.clientY;
 
