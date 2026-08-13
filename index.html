@@ -1,0 +1,881 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Balões de Letras</title>
+
+<style>
+  :root {
+    --ceu-1: #7fd3ff;
+    --ceu-2: #bfeaff;
+    --ceu-3: #ffeec2;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: none;
+    background: #7fd3ff;
+    font-family: 'Comic Sans MS', 'Trebuchet MS', 'Segoe UI', sans-serif;
+    cursor: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ---------- cenário ---------- */
+
+  #ceu {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, var(--ceu-1) 0%, var(--ceu-2) 55%, var(--ceu-3) 100%);
+  }
+
+  #sol {
+    position: absolute;
+    top: 5vh;
+    right: 7vw;
+    width: 13vh;
+    height: 13vh;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #fff8b0, #ffd34d 60%, #ffb327);
+    box-shadow: 0 0 60px 24px rgba(255, 214, 92, .45);
+    animation: pulsa 6s ease-in-out infinite;
+  }
+
+  @keyframes pulsa {
+    50% { transform: scale(1.06); }
+  }
+
+  .nuvem {
+    position: absolute;
+    background: #fff;
+    border-radius: 60px;
+    opacity: .9;
+    animation: passa linear infinite;
+  }
+
+  .nuvem::before,
+  .nuvem::after {
+    content: "";
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+  }
+
+  .nuvem::before {
+    width: 55%; height: 150%;
+    left: 12%; bottom: 30%;
+  }
+
+  .nuvem::after {
+    width: 42%; height: 120%;
+    right: 12%; bottom: 35%;
+  }
+
+  @keyframes passa {
+    from { transform: translateX(-40vw); }
+    to   { transform: translateX(120vw); }
+  }
+
+  #morro {
+    position: absolute;
+    left: -10%;
+    bottom: -4vh;
+    width: 120%;
+    height: 20vh;
+    background: linear-gradient(180deg, #8fd96b, #58ab48);
+    border-radius: 50% 50% 0 0 / 42% 42% 0 0;
+  }
+
+  #morro2 {
+    position: absolute;
+    left: -20%;
+    bottom: -6vh;
+    width: 90%;
+    height: 15vh;
+    background: linear-gradient(180deg, #7ecb5c, #4c9a3e);
+    border-radius: 50% 50% 0 0 / 50% 50% 0 0;
+    opacity: .85;
+  }
+
+  /* ---------- palco ---------- */
+
+  #palco {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* ---------- balão ---------- */
+
+  .balao {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--w);
+    will-change: transform;
+  }
+
+  .balao .corpo {
+    position: relative;
+    width: 100%;
+    height: calc(var(--w) * 1.22);
+    border-radius: 50% 50% 47% 47% / 55% 55% 45% 45%;
+    background:
+      radial-gradient(circle at 32% 26%, rgba(255,255,255,.9), rgba(255,255,255,0) 42%),
+      radial-gradient(circle at 70% 80%, rgba(0,0,0,.18), rgba(0,0,0,0) 55%),
+      linear-gradient(160deg, var(--c), var(--c2));
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,.18));
+  }
+
+  .balao .corpo::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    transform: translateX(-50%);
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 13px solid var(--c2);
+  }
+
+  .balao .letra {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding-bottom: 6%;
+    font-size: calc(var(--w) * .52);
+    font-weight: bold;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 3px 0 rgba(0,0,0,.22), 0 0 14px rgba(0,0,0,.18);
+  }
+
+  .balao .fio {
+    position: absolute;
+    left: 50%;
+    top: calc(var(--w) * 1.22 + 10px);
+    transform: translateX(-50%);
+    width: 22px;
+    height: calc(var(--w) * .5);
+  }
+
+  .balao .fio path {
+    fill: none;
+    stroke: rgba(255,255,255,.8);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+
+  .balao.estourou .corpo { animation: estoura .18s ease-out forwards; }
+  .balao.estourou .fio   { animation: some .18s linear forwards; }
+
+  @keyframes estoura {
+    0%   { transform: scale(1);    opacity: 1; }
+    45%  { transform: scale(1.35); opacity: .9; }
+    100% { transform: scale(.2);   opacity: 0; }
+  }
+
+  @keyframes some { to { opacity: 0; } }
+
+  /* ---------- confete ---------- */
+
+  .confete {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 14px;
+    height: 14px;
+    will-change: transform;
+  }
+
+  /* ---------- letra que voa ao estourar ---------- */
+
+  .voa {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 3px 0 rgba(0,0,0,.22);
+    animation: voa .8s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+
+  @keyframes voa {
+    from { transform: translate(-50%, -50%) scale(1)   rotate(0deg);   opacity: .95; }
+    to   { transform: translate(-50%, -160%) scale(1.9) rotate(12deg); opacity: 0; }
+  }
+
+  /* ---------- rastro do mouse ---------- */
+
+  .brilho {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    animation: brilho .65s ease-out forwards;
+  }
+
+  @keyframes brilho {
+    from { transform: translate(-50%, -50%) scale(1);  opacity: .95; }
+    to   { transform: translate(-50%, -50%) scale(.1); opacity: 0; }
+  }
+
+  /* ---------- abelha ---------- */
+
+  #abelha {
+    position: fixed;
+    left: 0;
+    top: 0;
+    font-size: 46px;
+    line-height: 1;
+    pointer-events: none;
+    will-change: transform, opacity;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,.3));
+    z-index: 50;
+    opacity: 0;
+    transition: opacity .25s ease;
+  }
+
+  #abelha.visivel { opacity: 1; }
+
+  #abelha span {
+    display: block;
+    animation: zumbido .22s ease-in-out infinite alternate;
+  }
+
+  @keyframes zumbido {
+    from { transform: translateY(-2px); }
+    to   { transform: translateY(2px); }
+  }
+
+  /* ---------- barra de controles ---------- */
+
+  .ui {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+    transition: opacity .5s ease;
+    cursor: default;
+  }
+
+  .ui.oculto {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .ui button {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255,255,255,.75);
+    color: #2b4a63;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+
+  .ui button:hover { background: #fff; }
+
+  #dica {
+    position: fixed;
+    left: 50%;
+    bottom: 4vh;
+    transform: translateX(-50%);
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.7);
+    color: #2b4a63;
+    font-size: 15px;
+    z-index: 100;
+    transition: opacity .6s ease;
+  }
+
+  #dica.oculto { opacity: 0; }
+</style>
+
+<div id="ceu">
+  <div id="sol"></div>
+  <div class="nuvem" style="width:200px;height:60px;top:12vh;animation-duration:70s"></div>
+  <div class="nuvem" style="width:140px;height:44px;top:28vh;animation-duration:95s;animation-delay:-30s"></div>
+  <div class="nuvem" style="width:260px;height:74px;top:6vh;animation-duration:120s;animation-delay:-70s;opacity:.75"></div>
+  <div class="nuvem" style="width:170px;height:52px;top:42vh;animation-duration:85s;animation-delay:-55s;opacity:.7"></div>
+  <div id="morro2"></div>
+  <div id="morro"></div>
+</div>
+
+<div id="palco"></div>
+
+<div id="abelha"><span>🐝</span></div>
+
+<div class="ui" id="ui">
+  <button id="btFull" type="button">Tela cheia</button>
+  <button id="btSegunda" type="button">2ª janela</button>
+</div>
+
+<div id="dica">Aperte qualquer letra ou número 🎈</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const palco   = document.getElementById('palco');
+  const abelha  = document.getElementById('abelha');
+  const ui      = document.getElementById('ui');
+  const dica    = document.getElementById('dica');
+  const ehSegunda = new URLSearchParams(location.search).get('tela') === '2';
+
+  const MAX_BALOES  = 25;
+  const MAX_CONFETE = 140;
+
+  const rand  = (a, b) => a + Math.random() * (b - a);
+  const pick  = arr => arr[Math.floor(Math.random() * arr.length)];
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  let W = innerWidth, H = innerHeight;
+  addEventListener('resize', () => {
+    W = innerWidth; H = innerHeight;
+    for (const b of baloes) {
+      b.alvoY = clamp(b.alvoY, H * 0.30, H * 0.58);
+      b.x = clamp(b.x, 80, W - 80);
+    }
+  });
+
+  // ------------------------------------------------------------------ som
+
+  let ac = null, master = null, ruido = null;
+
+  function audio() {
+    if (!ac) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ac = new AC();
+      master = ac.createGain();
+      master.gain.value = 0.85;
+      master.connect(ac.destination);
+    }
+    if (ac.state === 'suspended') ac.resume();
+    return ac;
+  }
+
+  function bufferRuido() {
+    if (ruido) return ruido;
+    const n = Math.floor(ac.sampleRate * 0.25);
+    ruido = ac.createBuffer(1, n, ac.sampleRate);
+    const d = ruido.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+    return ruido;
+  }
+
+  function somEstouro() {
+    if (!audio()) return;
+    const t = ac.currentTime;
+
+    const src = ac.createBufferSource();
+    src.buffer = bufferRuido();
+    const bp = ac.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(rand(1600, 2400), t);
+    bp.frequency.exponentialRampToValueAtTime(400, t + 0.13);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.55, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    src.connect(bp).connect(g).connect(master);
+    src.start(t);
+    src.stop(t + 0.18);
+
+    const o = ac.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(rand(600, 820), t);
+    o.frequency.exponentialRampToValueAtTime(110, t + 0.14);
+    const g2 = ac.createGain();
+    g2.gain.setValueAtTime(0.28, t);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+    o.connect(g2).connect(master);
+    o.start(t);
+    o.stop(t + 0.18);
+  }
+
+  function somSurgir() {
+    if (!audio()) return;
+    const t = ac.currentTime;
+    const o = ac.createOscillator();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(380, t);
+    o.frequency.exponentialRampToValueAtTime(880, t + 0.12);
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.14, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g).connect(master);
+    o.start(t);
+    o.stop(t + 0.18);
+  }
+
+  // zumbido contínuo da abelha, com volume/agudo variando conforme a velocidade
+
+  let zum = null, zumTimer = null;
+
+  function garanteZumbido() {
+    if (zum || !audio()) return;
+
+    const filtro = ac.createBiquadFilter();
+    filtro.type = 'lowpass';
+    filtro.frequency.value = 950;
+    filtro.Q.value = 0.6;
+
+    const g = ac.createGain();
+    g.gain.value = 0;
+
+    const o1 = ac.createOscillator();
+    o1.type = 'sawtooth';
+    o1.frequency.value = 190;
+    const o2 = ac.createOscillator();
+    o2.type = 'sawtooth';
+    o2.frequency.value = 196;
+
+    o1.connect(filtro);
+    o2.connect(filtro);
+    filtro.connect(g);
+    g.connect(master);
+    o1.start();
+    o2.start();
+
+    zum = { gain: g, o1, o2 };
+  }
+
+  function zumbe(dist) {
+    if (!audio()) return;
+    garanteZumbido();
+    if (!zum) return;
+
+    const t = ac.currentTime;
+    const alvo = clamp(0.015 + dist * 0.004, 0, 0.1);
+    zum.gain.gain.setTargetAtTime(alvo, t, 0.05);
+
+    const freq = clamp(170 + dist * 1.4, 170, 340);
+    zum.o1.frequency.setTargetAtTime(freq, t, 0.09);
+    zum.o2.frequency.setTargetAtTime(freq + 6, t, 0.09);
+
+    clearTimeout(zumTimer);
+    zumTimer = setTimeout(silenciaZumbido, 160);
+  }
+
+  function silenciaZumbido(rapido) {
+    if (!zum) return;
+    const t = ac.currentTime;
+    zum.gain.gain.setTargetAtTime(0, t, rapido ? 0.05 : 0.12);
+  }
+
+  // ------------------------------------------------------------------ voz
+
+  const NOMES = {
+    A: 'A', B: 'B', C: 'C', D: 'D', E: 'E', F: 'F', 
+    G: 'G', H: 'H', I: 'I', J: 'J', K: 'K', L: 'L', 
+    M: 'M', N: 'N', O: 'Ó', P: 'P', Q: 'Q', R: 'R', 
+    S: 'S', T: 'T', U: 'U', V: 'V', W: 'W', X: 'X', 
+    Y: 'Y', Z: 'Z',
+    '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
+    '5': '5', '6': '6', '7': '7', '8': '8', '9': '9'
+  };
+
+  const ELOGIOS = ['Boa!', 'Parabéns!', 'Muito bem!', 'Legal!'];
+
+  let voz = null;
+  function carregaVozes() {
+    if (!('speechSynthesis' in window)) return;
+    const vs = speechSynthesis.getVoices();
+    const pt = v => /^pt/i.test(v.lang);
+    const brasileira = v => /pt[-_]BR/i.test(v.lang);
+    // as vozes "Online (Natural)" do Edge aparecem na lista mas ficam mudas ao
+    // chamar speak() em vários setups — não priorizamos essas. A voz do Google
+    // no Chrome é confiável e soa melhor que a voz local padrão do Windows.
+    voz = vs.find(v => brasileira(v) && /google/i.test(v.name))
+       || vs.find(v => pt(v) && /google/i.test(v.name))
+       || vs.find(brasileira)
+       || vs.find(pt)
+       || null;
+  }
+  if ('speechSynthesis' in window) {
+    carregaVozes();
+    speechSynthesis.onvoiceschanged = carregaVozes;
+  }
+
+  function fala(texto) {
+    if (!('speechSynthesis' in window)) return;
+    try { speechSynthesis.cancel(); } catch (e) { /* ignora */ }
+    const u = new SpeechSynthesisUtterance(texto);
+    if (voz) u.voice = voz;
+    u.lang = 'pt-BR';
+    u.rate = 1;
+    u.pitch = 1.05;
+    try { speechSynthesis.speak(u); } catch (e) { /* ignora */ }
+  }
+
+  // ------------------------------------------------------------------ balões
+
+  const baloes = [];
+  const confetes = [];
+
+  // posição horizontal segue a posição da tecla no teclado
+  const FILEIRAS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM'];
+
+  function xDaTecla(ch) {
+    let frac = Math.random();
+    for (const f of FILEIRAS) {
+      const i = f.indexOf(ch);
+      if (i >= 0) { frac = (i + 0.5) / f.length; break; }
+    }
+    const m = 120;
+    return clamp(m + frac * (W - 2 * m) + rand(-35, 35), 80, W - 80);
+  }
+
+  function criaBalao(ch) {
+    if (baloes.length >= MAX_BALOES) soltaBalao(baloes[0]);
+
+    const tam = rand(90, 170);
+    const alt = tam * 1.22;
+    const hue = Math.floor(rand(0, 360));
+    const c1  = `hsl(${hue} 85% 62%)`;
+    const c2  = `hsl(${hue} 80% 44%)`;
+
+    const el = document.createElement('div');
+    el.className = 'balao';
+    el.style.setProperty('--w', tam + 'px');
+    el.style.setProperty('--c', c1);
+    el.style.setProperty('--c2', c2);
+    el.innerHTML =
+      '<div class="corpo"><div class="letra">' + ch + '</div></div>' +
+      '<svg class="fio" viewBox="0 0 22 60" preserveAspectRatio="none">' +
+      '<path d="M11 0 Q 2 18 11 34 Q 20 50 8 60"/></svg>';
+    palco.appendChild(el);
+
+    const b = {
+      el, ch, hue, tam, alt,
+      x: xDaTecla(ch),
+      y: H + alt,
+      alvoY: rand(H * 0.34, H * 0.55),
+      vel: rand(130, 190),
+      fase: rand(0, Math.PI * 2),
+      estado: 'sobe',
+      px: 0, py: 0
+    };
+    baloes.push(b);
+    desenhaBalao(b, 0);
+    somSurgir();
+    fala(NOMES[ch] || ch);
+  }
+
+  // deixa o balão mais antigo ir embora quando passa do limite
+  function soltaBalao(b) {
+    const i = baloes.indexOf(b);
+    if (i >= 0) baloes.splice(i, 1);
+    b.estado = 'vai';
+    fugindo.push(b);
+  }
+
+  const fugindo = [];
+
+  function estoura(b) {
+    const i = baloes.indexOf(b);
+    if (i < 0) return;
+    baloes.splice(i, 1);
+
+    somEstouro();
+    confeteEm(b.px, b.py, b.hue, 14);
+    letraVoando(b.px, b.py, b.ch, b.tam);
+
+    b.el.classList.add('estourou');
+    setTimeout(() => b.el.remove(), 220);
+
+    if (Math.random() < 0.34) fala(pick(ELOGIOS));
+  }
+
+  function desenhaBalao(b, t) {
+    let y = b.y, bal = 0, giro = 0;
+    if (b.estado === 'flutua') {
+      y = b.alvoY + Math.sin(t * 1.6 + b.fase) * 10;
+      bal = Math.sin(t * 0.9 + b.fase) * 20;
+      giro = Math.sin(t * 0.9 + b.fase) * 4;
+    } else {
+      bal = Math.sin(t * 1.1 + b.fase) * 10;
+      giro = Math.sin(t * 1.1 + b.fase) * 3;
+    }
+    b.px = b.x + bal;
+    b.py = y;
+    b.el.style.transform =
+      'translate3d(' + (b.px - b.tam / 2).toFixed(1) + 'px,' +
+                       (y - b.alt / 2).toFixed(1) + 'px,0) rotate(' + giro.toFixed(1) + 'deg)';
+  }
+
+  // ------------------------------------------------------------------ efeitos
+
+  function confeteEm(x, y, hue, n) {
+    for (let i = 0; i < n; i++) {
+      if (confetes.length >= MAX_CONFETE) {
+        const velho = confetes.shift();
+        velho.el.remove();
+      }
+      const el = document.createElement('div');
+      el.className = 'confete';
+      const h = (hue + rand(-40, 40) + 360) % 360;
+      const tam = rand(8, 16);
+      el.style.width = tam + 'px';
+      el.style.height = tam * rand(0.5, 1) + 'px';
+      el.style.background = `hsl(${h} 90% ${rand(55, 72)}%)`;
+      el.style.borderRadius = Math.random() < 0.5 ? '50%' : '3px';
+      palco.appendChild(el);
+
+      const ang = rand(0, Math.PI * 2);
+      const spd = rand(180, 520);
+      confetes.push({
+        el, x, y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 120,
+        rot: rand(0, 360),
+        vrot: rand(-420, 420),
+        vida: rand(0.9, 1.6)
+      });
+    }
+  }
+
+  function letraVoando(x, y, ch, tam) {
+    const el = document.createElement('div');
+    el.className = 'voa';
+    el.textContent = ch;
+    el.style.fontSize = (tam * 0.52) + 'px';
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    palco.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function brilho(x, y, hue) {
+    const el = document.createElement('div');
+    el.className = 'brilho';
+    const t = rand(10, 22);
+    el.style.width = t + 'px';
+    el.style.height = t + 'px';
+    el.style.background = `hsl(${hue} 95% 70%)`;
+    el.style.boxShadow = `0 0 10px hsl(${hue} 95% 65%)`;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    palco.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+  }
+
+  function explosaoDeBrilho(x, y) {
+    for (let i = 0; i < 8; i++) {
+      brilho(x + rand(-22, 22), y + rand(-22, 22), (matiz + i * 24) % 360);
+    }
+  }
+
+  // ------------------------------------------------------------------ loop
+
+  let t = 0, ultimo = performance.now();
+
+  function quadro(agora) {
+    const dt = Math.min((agora - ultimo) / 1000, 0.05);
+    ultimo = agora;
+    t += dt;
+
+    for (const b of baloes) {
+      if (b.estado === 'sobe') {
+        b.y -= b.vel * dt;
+        if (b.y <= b.alvoY) { b.y = b.alvoY; b.estado = 'flutua'; }
+      }
+      desenhaBalao(b, t);
+    }
+
+    for (let i = fugindo.length - 1; i >= 0; i--) {
+      const b = fugindo[i];
+      b.y -= b.vel * 1.6 * dt;
+      b.el.style.opacity = String(clamp(b.y / (H * 0.4), 0, 1));
+      desenhaBalao(b, t);
+      if (b.y < -b.alt * 2) { b.el.remove(); fugindo.splice(i, 1); }
+    }
+
+    for (let i = confetes.length - 1; i >= 0; i--) {
+      const c = confetes[i];
+      c.vy += 1300 * dt;
+      c.x += c.vx * dt;
+      c.y += c.vy * dt;
+      c.rot += c.vrot * dt;
+      c.vida -= dt;
+      if (c.vida <= 0 || c.y > H + 60) {
+        c.el.remove();
+        confetes.splice(i, 1);
+        continue;
+      }
+      c.el.style.opacity = String(clamp(c.vida, 0, 1));
+      c.el.style.transform =
+        'translate3d(' + c.x.toFixed(1) + 'px,' + c.y.toFixed(1) + 'px,0) rotate(' + c.rot.toFixed(0) + 'deg)';
+    }
+
+    requestAnimationFrame(quadro);
+  }
+  requestAnimationFrame(quadro);
+
+  // ------------------------------------------------------------------ teclado
+
+  // Bloqueamos aqui tudo que o navegador permite bloquear via JS (Ctrl+A,
+  // Backspace voltando página, Tab mudando foco, F5, etc). Esc, Alt+F4, Ctrl+W,
+  // F11, tecla Windows e Alt+Tab são reservados pelo próprio Windows/navegador —
+  // nenhuma página web consegue impedi-los, então nem tentamos (e Esc sempre
+  // deve continuar funcionando, é a saída de emergência do adulto).
+  addEventListener('keydown', e => {
+    if (e.key === 'Escape') return;
+
+    const semModificador = !e.ctrlKey && !e.altKey && !e.metaKey;
+    if (semModificador && !e.repeat && e.key.length === 1) {
+      const k = e.key;
+      if (k === ' ') { e.preventDefault(); return; }
+
+      const ch = k.toUpperCase();
+      if (/[A-ZÀ-Ü0-9]/.test(ch)) {
+        e.preventDefault();
+        escondeDica();
+        audio();
+        const existente = baloes.find(b => b.ch === ch);
+        if (existente) estoura(existente);
+        else criaBalao(ch);
+        return;
+      }
+    }
+
+    e.preventDefault();
+  });
+
+  // trava a saída (fechar aba/janela, recarregar) enquanto estiver em tela
+  // cheia — o navegador mostra uma confirmação nativa que a criança não
+  // consegue clicar sozinha. Sair da tela cheia (Esc) remove a trava.
+  let travaSaida = false;
+  addEventListener('beforeunload', e => {
+    if (!travaSaida) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+  document.addEventListener('fullscreenchange', () => {
+    travaSaida = !!document.fullscreenElement;
+  });
+
+  // ------------------------------------------------------------------ mouse
+
+  let ax = W / 2, ay = H / 2, ultX = ax, ultY = ay, matiz = 0;
+  abelha.style.transform = `translate3d(${ax}px,${ay}px,0)`;
+
+  // some quando o mouse sai da janela, volta quando entra
+  document.documentElement.addEventListener('mouseleave', () => {
+    abelha.classList.remove('visivel');
+    silenciaZumbido(true);
+  });
+  document.documentElement.addEventListener('mouseenter', () => {
+    abelha.classList.add('visivel');
+  });
+
+  addEventListener('pointermove', e => {
+    abelha.classList.add('visivel');
+    ax = e.clientX; ay = e.clientY;
+
+    const dx = ax - ultX, dy = ay - ultY;
+    const dist = Math.hypot(dx, dy);
+    const inclina = clamp(dx * 0.8, -25, 25);
+    abelha.style.transform =
+      `translate3d(${ax}px,${ay}px,0) translate(-50%,-50%) rotate(${inclina.toFixed(1)}deg)`;
+
+    if (dist > 0.5) zumbe(dist);
+
+    if (dist > 10) {
+      matiz = (matiz + 17) % 360;
+      brilho(ultX + dx * 0.5, ultY + dy * 0.5, matiz);
+      ultX = ax; ultY = ay;
+    }
+
+    if (e.clientY < 70) mostraUI();
+  }, { passive: true });
+
+  addEventListener('pointerdown', e => {
+    if (e.target.closest('.ui')) return;
+    audio();
+    escondeDica();
+    if (ehSegunda) telaCheia();
+
+    const x = e.clientX, y = e.clientY;
+    let alvo = null;
+    for (let i = baloes.length - 1; i >= 0; i--) {
+      const b = baloes[i];
+      const dx = (x - b.px) / (b.tam / 2);
+      const dy = (y - b.py) / (b.alt / 2);
+      if (dx * dx + dy * dy <= 1) { alvo = b; break; }
+    }
+    if (alvo) estoura(alvo);
+    else explosaoDeBrilho(x, y);
+  });
+
+  addEventListener('contextmenu', e => e.preventDefault());
+  addEventListener('dragstart', e => e.preventDefault());
+
+  // ------------------------------------------------------------------ interface
+
+  let timerUI = null;
+  function mostraUI() {
+    if (ehSegunda) return;
+    ui.classList.remove('oculto');
+    clearTimeout(timerUI);
+    timerUI = setTimeout(() => ui.classList.add('oculto'), 4000);
+  }
+
+  let timerDica = null;
+  function escondeDica() {
+    if (dica.classList.contains('oculto')) return;
+    dica.classList.add('oculto');
+    clearTimeout(timerDica);
+    timerDica = setTimeout(() => dica.remove(), 800);
+  }
+
+  function telaCheia() {
+    if (document.fullscreenElement) return;
+    const p = document.documentElement.requestFullscreen();
+    if (p && p.catch) p.catch(() => { /* usuário pode usar F11 */ });
+  }
+
+  document.getElementById('btFull').addEventListener('click', telaCheia);
+
+  document.getElementById('btSegunda').addEventListener('click', async () => {
+    const url = location.href.split('?')[0].split('#')[0] + '?tela=2';
+    let opcoes = 'popup=yes,width=1200,height=800,left=80,top=80';
+
+    try {
+      if (window.getScreenDetails) {
+        const d = await window.getScreenDetails();
+        const outra = d.screens.find(s => s !== d.currentScreen) || d.currentScreen;
+        opcoes = `popup=yes,left=${outra.availLeft},top=${outra.availTop},` +
+                 `width=${outra.availWidth},height=${outra.availHeight}`;
+      }
+    } catch (err) { /* sem permissão: abre janela normal para arrastar */ }
+
+    const w = window.open(url, 'baloes2', opcoes);
+    if (w) w.focus();
+  });
+
+  if (ehSegunda) {
+    ui.remove();
+    dica.textContent = 'Clique aqui para começar nesta tela 🎈';
+  }
+
+  mostraUI();
+  setTimeout(escondeDica, 12000);
+})();
+</script>
