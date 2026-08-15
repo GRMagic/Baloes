@@ -604,7 +604,7 @@
   const confetes = [];
 
   // posição horizontal segue a posição da tecla no teclado
-  const FILEIRAS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM'];
+  const FILEIRAS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
 
   function xDaTecla(ch) {
     let frac = Math.random();
@@ -963,8 +963,9 @@
       const k = e.key;
       if (k === ' ') { e.preventDefault(); return; }
 
+      // só A-Z e 0-9 puros: acentuadas (á, ã, ê...) e Ç ficam de fora de propósito
       const ch = k.toUpperCase();
-      if (/[A-ZÀ-Ü0-9]/.test(ch)) {
+      if (/^[A-Z0-9]$/.test(ch)) {
         e.preventDefault();
         escondeDica();
         audio();
