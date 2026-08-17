@@ -680,9 +680,12 @@
   function desenhaBalao(b, t) {
     let y = b.y, bal = 0, giro = 0;
     if (b.estado === 'flutua') {
-      y = b.alvoY + Math.sin(t * 1.6 + b.fase) * 10;
-      bal = Math.sin(t * 0.9 + b.fase) * 20;
-      giro = Math.sin(t * 0.9 + b.fase) * 4;
+      // a oscilação de flutuação entra aos poucos (não de uma vez) para não
+      // dar um "pulinho" no instante em que o balão termina de subir
+      const w = clamp((t - b.tFlutua) / 1.2, 0, 1);
+      y = b.alvoY + Math.sin(t * 1.6 + b.fase) * 10 * w;
+      bal = Math.sin(t * 0.9 + b.fase) * 20 * w + Math.sin(t * 1.1 + b.fase) * 10 * (1 - w);
+      giro = Math.sin(t * 0.9 + b.fase) * 4 * w + Math.sin(t * 1.1 + b.fase) * 3 * (1 - w);
     } else {
       bal = Math.sin(t * 1.1 + b.fase) * 10;
       giro = Math.sin(t * 1.1 + b.fase) * 3;
@@ -914,7 +917,7 @@
     for (const b of baloes) {
       if (b.estado === 'sobe') {
         b.y -= b.vel * dt;
-        if (b.y <= b.alvoY) { b.y = b.alvoY; b.estado = 'flutua'; }
+        if (b.y <= b.alvoY) { b.y = b.alvoY; b.estado = 'flutua'; b.tFlutua = t; }
       }
       desenhaBalao(b, t);
     }
