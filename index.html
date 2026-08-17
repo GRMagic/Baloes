@@ -745,7 +745,9 @@
       b.eggT0 = t;
     });
 
-    fala(palavra);
+    // espera os balões terminarem de se acomodar para só então falar o nome
+    // (assim a última letra digitada também é ouvida, sem ser cortada)
+    setTimeout(() => fala(palavra), EGG_DURACAO * 1000);
   }
 
   function desenhaBalao(b, t) {
