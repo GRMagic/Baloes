@@ -697,6 +697,21 @@
     if (b.ch !== ' ' && Math.random() < 0.34) fala(pick(ELOGIOS));
   }
 
+  // estoura todos os balões da tela, em ordem embaralhada e com pequenos
+  // intervalos aleatórios entre cada um — uma "limpeza de tela" rápida
+  function estouraTodos() {
+    const ordem = [...baloes];
+    for (let i = ordem.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ordem[i], ordem[j]] = [ordem[j], ordem[i]];
+    }
+    let atraso = 0;
+    for (const b of ordem) {
+      atraso += rand(20, 60);
+      setTimeout(() => estoura(b), atraso);
+    }
+  }
+
   // trata uma tecla (letra, número ou espaço): continua/inicia uma tentativa
   // de easter egg quando faz sentido, senão cria/estoura balão normalmente
   function processaTecla(ch) {
@@ -1046,7 +1061,10 @@
   // nenhuma página web consegue impedi-los, então nem tentamos (e Esc sempre
   // deve continuar funcionando, é a saída de emergência do adulto).
   addEventListener('keydown', e => {
-    if (e.key === 'Escape') return;
+    if (e.key === 'Escape') {
+      if (!e.repeat) estouraTodos();
+      return;
+    }
 
     const semModificador = !e.ctrlKey && !e.altKey && !e.metaKey;
     if (semModificador && !e.repeat && e.key.length === 1) {
