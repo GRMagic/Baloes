@@ -664,47 +664,35 @@
   let contadorId = 0;
   function novoId() { return MEU_ID + ':' + (++contadorId); }
 
-  // Posição horizontal segue a posição da tecla no teclado. Com as duas telas
-  // abertas, os dois monitores lado a lado viram um teclado só: a metade
-  // esquerda do teclado sobe na tela 1, a direita na tela 2.
-  const FILEIRAS = [
-    ['12345', '67890'],
-    ['QWERT', 'YUIOP'],
-    ['ASDFG', 'HJKLÇ'],
-    ['ZXCVB', 'NM']
-  ];
+  // Com uma tela só, a posição horizontal segue a posição da tecla no teclado:
+  // a tela inteira vira um teclado e a letra sobe embaixo da tecla dela. Com as
+  // duas telas abertas isso não vale mais — o balão sobe em tela sorteada e em
+  // posição sorteada.
+  const FILEIRAS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKLÇ', 'ZXCVBNM'];
 
   function achaTecla(ch) {
-    for (const [esq, dir] of FILEIRAS) {
-      let i = esq.indexOf(ch);
-      if (i >= 0) return { lado: 0, i, len: esq.length, iCheia: i, lenCheia: esq.length + dir.length };
-      i = dir.indexOf(ch);
-      if (i >= 0) return { lado: 1, i, len: dir.length, iCheia: esq.length + i, lenCheia: esq.length + dir.length };
+    for (const fileira of FILEIRAS) {
+      const i = fileira.indexOf(ch);
+      if (i >= 0) return { i, len: fileira.length };
     }
     return null;
   }
 
-  // em qual tela esta tecla deve fazer o balão subir
-  function telaDaTecla(ch) {
+  // em qual tela o balão vai subir
+  function telaDoBalao() {
     if (!outraTelaPresente()) return MEU_ID;
-    if (ch === ' ') {
-      // a barra de espaço não é de mão nenhuma: vai para a tela mais vazia
-      return baloes.length <= espelho.baloes.length ? MEU_ID : OUTRO_ID;
-    }
-    const p = achaTecla(ch);
-    if (!p) return MEU_ID;
-    return p.lado === 0 ? '1' : '2';
+    return Math.random() < 0.5 ? '1' : '2';
   }
 
   function xDaTecla(ch) {
     let frac = Math.random();
-    if (ch === ' ') {
-      frac = 0.5; // barra de espaço fica centralizada embaixo do teclado
-    } else {
-      const p = achaTecla(ch);
-      // com duas telas, a metade do teclado se espalha pela largura inteira
-      // desta tela; sozinha, a fileira inteira se espalha por ela, como sempre
-      if (p) frac = outraTelaPresente() ? (p.i + 0.5) / p.len : (p.iCheia + 0.5) / p.lenCheia;
+    if (!outraTelaPresente()) {
+      if (ch === ' ') {
+        frac = 0.5; // barra de espaço fica centralizada embaixo do teclado
+      } else {
+        const p = achaTecla(ch);
+        if (p) frac = (p.i + 0.5) / p.len;
+      }
     }
     const m = 120;
     return clamp(m + frac * (W - 2 * m) + rand(-35, 35), 80, W - 80);
@@ -912,7 +900,7 @@
   function nasceBalao(ch) {
     garanteEspaco();
 
-    const destino = telaDaTecla(ch);
+    const destino = telaDoBalao();
     if (destino === MEU_ID) {
       const b = criaBalao(ch);
       return { id: b.id, ch, tela: MEU_ID, nasc: b.nasc };
@@ -1173,8 +1161,6 @@
   // uma foto do inventário só é confiável sobre um balão meu depois que deu
   // tempo do pedido chegar lá e voltar contado (ida + espera do próximo aviso)
   const FOLGA_ESPELHO = 700;
-
-  const OUTRO_ID = MEU_ID === '1' ? '2' : '1';
 
   // o que a outra tela tem, do jeito que ela contou por último
   const espelho = { visto: 0, baloes: [] };

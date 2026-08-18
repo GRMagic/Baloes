@@ -17,9 +17,9 @@ Não precisa de internet nem de instalar nada em nenhum dos dois casos.
 
 ## Como usar
 
-- **Apertar uma letra ou número** faz um balão subir com aquela letra, do lado da tela que
-  combina com o lado do teclado. A voz fala a letra em voz alta. O **Ç** também vale (fica
-  do lado direito do teclado, depois do L); as outras acentuadas (á, ã, ê...) não.
+- **Apertar uma letra ou número** faz um balão subir com aquela letra, embaixo da tecla
+  correspondente (com as duas telas abertas, em posição sorteada — veja a seção delas). A voz
+  fala a letra em voz alta. O **Ç** também vale; as outras acentuadas (á, ã, ê...) não.
 - **Apertar a mesma letra de novo** estoura o balão daquela letra, com som e confete.
 - **Clicar em cima de um balão** (botão esquerdo ou direito do mouse) também estoura.
 - **Esc** estoura todos os balões de uma vez, limpando a tela.
@@ -30,10 +30,9 @@ Não precisa de internet nem de instalar nada em nenhum dos dois casos.
 
 As duas telas viram **uma sala só**, como se a segunda fosse a continuação da primeira:
 
-- Os **dois monitores viram um teclado gigante**: as teclas da metade esquerda do teclado
-  (`Q W E R T`, `A S D F G`, `1 2 3 4 5`...) fazem o balão subir na tela da esquerda, e as da
-  metade direita (`Y U I O P`, `H J K L`, `6 7 8 9 0`...) na tela da direita. Não importa qual
-  das duas janelas está em foco — o teclado é o mesmo para as duas.
+- Os balões **sobem em tela sorteada e em posição sorteada**: com as duas abertas, a letra
+  pode aparecer em qualquer canto de qualquer um dos dois monitores. Não importa qual das
+  duas janelas está em foco — o teclado é o mesmo para as duas.
 - O **limite de balões é compartilhado**: são 25 no total somando as duas telas, não 25 em cada.
   Passando disso, o balão mais antigo das duas sobe e vai embora.
 - **Esc limpa as duas telas** de uma vez.
@@ -114,8 +113,8 @@ janela normal — é só arrastar para o outro monitor e apertar F11 nela.
 
 As duas janelas funcionam como uma sala só, igual ao modo quiosque de 2 telas (veja "Com as
 duas telas abertas" acima). Só o teclado é que continua indo para a janela em foco (a última
-clicada) — mas tanto faz qual delas seja: as teclas da metade direita do teclado fazem o balão
-subir na outra tela do mesmo jeito.
+clicada) — mas tanto faz qual delas seja: o balão sai numa das duas telas por sorteio, não
+depende de qual janela recebeu a tecla.
 
 ## Voz
 
