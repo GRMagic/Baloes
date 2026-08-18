@@ -847,7 +847,7 @@
 
   // estoura todos os balões da tela, em ordem embaralhada e com pequenos
   // intervalos aleatórios entre cada um — uma "limpeza de tela" rápida
-  function estouraTodos(semElogio) {
+  function estouraTodos() {
     // balão a caminho da outra tela (ou ainda estacionado esperando entrar)
     // some sem estouro: ele está fora da tela, o confete viria do nada
     for (const b of [...baloes]) {
@@ -862,15 +862,15 @@
     let atraso = 0;
     for (const b of ordem) {
       atraso += rand(20, 60);
-      setTimeout(() => estoura(b, false, semElogio), atraso);
+      setTimeout(() => estoura(b, false, true), atraso);
     }
   }
 
   // Esc limpa as duas telas de uma vez. Os balões estouram com som nas duas
-  // (cada estouro é de um balão que está mesmo ali), mas a frase de elogio sai
-  // só na tela que apertou o Esc — uma voz só, não duas atropelando.
+  // (cada estouro é de um balão que está mesmo ali), mas nenhum deles elogia: o
+  // "Boa!" é para quem mirou o balão e acertou, e apagar a tela não é isso.
   function limpaTudo(propaga) {
-    estouraTodos(!propaga);
+    estouraTodos();
     defineSequencia([], false); // o próprio 'limpar' já avisa a outra tela
     if (propaga) enviaEvento('limpar');
   }
