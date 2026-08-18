@@ -66,7 +66,10 @@ while ($true) {
     if ($rota -eq "/eventos") {
         if ($request.HttpMethod -eq "POST") {
             try {
-                $reader = New-Object IO.StreamReader($request.InputStream, $request.ContentEncoding)
+                # UTF-8 na marra: o fetch manda "application/json" sem charset, e aí
+                # o ContentEncoding cai no code page ANSI do Windows — o Ç (2 bytes em
+                # UTF-8) chegava na outra tela como "Ã‡". Corpo de fetch é sempre UTF-8.
+                $reader = New-Object IO.StreamReader($request.InputStream, [Text.Encoding]::UTF8)
                 $corpo = $reader.ReadToEnd()
                 $reader.Close()
                 $evento = $corpo | ConvertFrom-Json

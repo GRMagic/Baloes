@@ -595,7 +595,7 @@
     G: 'G', H: 'H', I: 'I', J: 'J', K: 'K', L: 'L', 
     M: 'M', N: 'N', O: 'Ó', P: 'P', Q: 'Q', R: 'R', 
     S: 'S', T: 'T', U: 'U', V: 'V', W: 'W', X: 'X', 
-    Y: 'Y', Z: 'Z',
+    Y: 'Y', Z: 'Z', 'Ç': 'Cê cedilha',
     '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
     '5': '5', '6': '6', '7': '7', '8': '8', '9': '9'
   };
@@ -668,7 +668,7 @@
   const FILEIRAS = [
     ['12345', '67890'],
     ['QWERT', 'YUIOP'],
-    ['ASDFG', 'HJKL'],
+    ['ASDFG', 'HJKLÇ'],
     ['ZXCVB', 'NM']
   ];
 
@@ -1600,9 +1600,9 @@
         return;
       }
 
-      // só A-Z e 0-9 puros: acentuadas (á, ã, ê...) e Ç ficam de fora de propósito
+      // só A-Z, 0-9 e Ç: as demais acentuadas (á, ã, ê...) ficam de fora de propósito
       const ch = k.toUpperCase();
-      if (/^[A-Z0-9]$/.test(ch)) {
+      if (/^[A-Z0-9Ç]$/.test(ch)) {
         e.preventDefault();
         escondeDica();
         audio();

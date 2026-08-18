@@ -18,7 +18,8 @@ Não precisa de internet nem de instalar nada em nenhum dos dois casos.
 ## Como usar
 
 - **Apertar uma letra ou número** faz um balão subir com aquela letra, do lado da tela que
-  combina com o lado do teclado. A voz fala a letra em voz alta.
+  combina com o lado do teclado. A voz fala a letra em voz alta. O **Ç** também vale (fica
+  do lado direito do teclado, depois do L); as outras acentuadas (á, ã, ê...) não.
 - **Apertar a mesma letra de novo** estoura o balão daquela letra, com som e confete.
 - **Clicar em cima de um balão** (botão esquerdo ou direito do mouse) também estoura.
 - **Esc** estoura todos os balões de uma vez, limpando a tela.
@@ -121,6 +122,8 @@ subir na outra tela do mesmo jeito.
 A página usa a voz do Google no Chrome, que soa bem mais natural que a voz padrão do
 Windows. Falar só a letra pura (sem soletração tipo "éfe", "ésse", sem pontuação extra) foi
 o que soou melhor nos testes — por isso o nome de várias letras no código é a própria letra.
+A exceção é o Ç, que é falado como "cê cedilha": é o nome dele mesmo, e o caractere sozinho
+nem sempre é lido pela voz.
 
 ## Se a voz não falar
 
