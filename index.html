@@ -68,8 +68,6 @@
   }
 
   #sol.arrastando, #lua.arrastando { transition: none; }
-  /* posição inicial não é animação: entra pronta, sem deslizar */
-  #sol.sem-transicao, #lua.sem-transicao { transition: none; }
   #sol.transicionando, #lua.transicionando { transition: top 3s ease-in-out; }
 
   #sol {
@@ -116,6 +114,18 @@
   }
 
   #morro, #morro2 { transition: filter 3s ease; }
+
+  /* Abrir a página já de noite não é uma virada acontecendo: é o estado em que
+     a criança chega. Então tudo que anima no dia <-> noite (astros, céu, nuvens
+     e morros) entra pronto no primeiro quadro, sem os 3 s de fade. O script
+     tira esta classe logo depois, e a suavidade volta para as viradas de
+     verdade. */
+  body.sem-transicao #sol,
+  body.sem-transicao #lua,
+  body.sem-transicao #ceu-noite,
+  body.sem-transicao #morro,
+  body.sem-transicao #morro2,
+  body.sem-transicao .nuvem { transition: none; }
 
   .nuvem {
     position: absolute;
@@ -398,10 +408,12 @@
   @keyframes aparece-despedida { from { opacity: 0; } }
 </style>
 
+<body class="sem-transicao">
+
 <div id="ceu">
   <div id="ceu-noite"></div>
-  <div id="sol" class="sem-transicao"></div>
-  <div id="lua" class="sem-transicao"><div class="sombra"></div></div>
+  <div id="sol"></div>
+  <div id="lua"><div class="sombra"></div></div>
   <div class="nuvem" style="width:200px;height:60px;top:12vh;animation-duration:70s"></div>
   <div class="nuvem" style="width:140px;height:44px;top:28vh;animation-duration:95s;animation-delay:-30s"></div>
   <div class="nuvem" style="width:260px;height:74px;top:6vh;animation-duration:120s;animation-delay:-70s;opacity:.75"></div>
@@ -1379,16 +1391,13 @@
     document.body.classList.add('noite');
   })();
 
-  // O astro parado nasce atrás do morro em vez de deslizar até lá. Sem isso o
-  // navegador chegava a resolver o estilo com o `top` do CSS (sol no céu) antes
-  // deste script rodar, e a mudança para a posição de baixo virava uma
-  // transição de 1,5 s: o sol descia pela tela na frente da criança ao abrir a
-  // página em modo noite. Com a transição desligada até aqui, o primeiro quadro
-  // já sai no lugar certo; do próximo em diante ela volta, que é o que dá a
-  // suavidade do dia <-> noite.
+  // Até aqui o cenário inteiro estava com as transições desligadas (classe no
+  // <body>), então abrir a página já de noite mostra a noite pronta no primeiro
+  // quadro, em vez de encenar uma virada que não aconteceu: sem o sol descendo
+  // pela tela e sem os 3 s de fade do céu, das nuvens e dos morros. Do próximo
+  // quadro em diante a classe sai e as viradas de verdade voltam a ser suaves.
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    sol.classList.remove('sem-transicao');
-    lua.classList.remove('sem-transicao');
+    document.body.classList.remove('sem-transicao');
   }));
 
   function podeArrastar(el) {
