@@ -23,6 +23,10 @@ set "PASTA=%PASTA:\=/%"
 set "URL1=file:///%PASTA%index.html"
 set "URL2=file:///%PASTA%index.html?tela=2"
 
+rem sobe o servidorzinho local que sincroniza dia/noite entre as duas janelas
+rem (cada uma usa um perfil separado do Chrome, entao nao trocam dados sozinhas)
+start "" /min powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0sync-server.ps1"
+
 rem posicoes calculadas para os seus dois monitores (1920x1080 lado a lado)
 start "" "%NAVEGADOR%" --kiosk --new-window --window-position=0,0 --no-first-run --no-default-browser-check --disable-pinch --overscroll-history-navigation=0 --disable-features=TranslateUI --user-data-dir="%TEMP%\baloes_kiosk_1" "%URL1%"
 

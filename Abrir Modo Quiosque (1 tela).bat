@@ -20,4 +20,8 @@ set "PASTA=%~dp0"
 set "PASTA=%PASTA:\=/%"
 set "URL1=file:///%PASTA%index.html"
 
+rem sobe o servidorzinho local: aqui ele nao sincroniza nada (so tem uma tela),
+rem mas e quem fecha o quiosque quando a palavra "sair" e digitada
+start "" /min powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "%~dp0sync-server.ps1"
+
 start "" "%NAVEGADOR%" --kiosk --new-window --no-first-run --no-default-browser-check --disable-pinch --overscroll-history-navigation=0 --disable-features=TranslateUI --user-data-dir="%TEMP%\baloes_kiosk" "%URL1%"

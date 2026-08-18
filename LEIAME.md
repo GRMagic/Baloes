@@ -21,8 +21,31 @@ Não precisa de internet nem de instalar nada em nenhum dos dois casos.
   combina com o lado do teclado. A voz fala a letra em voz alta.
 - **Apertar a mesma letra de novo** estoura o balão daquela letra, com som e confete.
 - **Clicar em cima de um balão** (botão esquerdo ou direito do mouse) também estoura.
+- **Esc** estoura todos os balões de uma vez, limpando a tela.
 - O mouse vira uma abelhinha 🐝 com rastro de brilhos, e zune enquanto se move (some e
   silencia quando o mouse sai da janela).
+
+## Com as duas telas abertas
+
+As duas telas viram **uma sala só**, como se a segunda fosse a continuação da primeira:
+
+- Os **dois monitores viram um teclado gigante**: as teclas da metade esquerda do teclado
+  (`Q W E R T`, `A S D F G`, `1 2 3 4 5`...) fazem o balão subir na tela da esquerda, e as da
+  metade direita (`Y U I O P`, `H J K L`, `6 7 8 9 0`...) na tela da direita. Não importa qual
+  das duas janelas está em foco — o teclado é o mesmo para as duas.
+- O **limite de balões é compartilhado**: são 25 no total somando as duas telas, não 25 em cada.
+  Passando disso, o balão mais antigo das duas sobe e vai embora.
+- **Esc limpa as duas telas** de uma vez.
+- A **voz sai sempre de uma tela só** — a que recebeu a tecla. O barulho de estouro
+  acontece nas duas (cada balão estoura onde está), mas as frases — a letra, os elogios
+  ("Boa!", "Legal!") e o "Tchau!" — nunca são faladas em dobro, senão uma voz atropela a outra.
+- Estourar repetindo a letra funciona mesmo que o balão esteja na outra tela.
+- As **palavras reservadas não dependem de tela**: dá para começar a digitar numa janela e
+  terminar na outra (inclusive o `sair`). A palavra se monta sempre na tela principal — as
+  letras que subiram na segunda atravessam para ela.
+
+A segunda tela é sempre opcional: com só uma aberta, tudo acontece nela normalmente, do mesmo
+jeito de sempre. Dá para abrir ou fechar a segunda no meio do uso, sem quebrar nada.
 
 ## Teclas travadas
 
@@ -65,10 +88,19 @@ senhas ou abas normais do Chrome.
 
 ## Sair
 
+**Aperte Esc e digite `sair`.** Os balões estouram, a voz se despede e as janelas fecham —
+as duas, se estiverem as duas abertas. É a saída do adulto.
+
+O **Esc antes é obrigatório**: a palavra `sair` só começa a contar com a tela limpa, sem
+nenhum balão. É o que impede a criança de fechar o brinquedo sem querer batendo no teclado.
+
+Outras formas, se precisar:
+
 - **Modo normal** (duplo clique no `index.html`): **Esc** sai da tela cheia, depois
   **Alt+F4** ou o X fecha normalmente.
-- **Modo quiosque** (`.bat`): nem Esc nem Alt+F4 fazem nada — testado e confirmado. A forma
-  garantida de sair é **Ctrl+Shift+Esc**, que abre o Gerenciador de Tarefas do Windows por
+- **Modo quiosque** (`.bat`): nem Esc nem Alt+F4 fazem nada — testado e confirmado. Se o
+  `sair` não funcionar (por exemplo, se o servidorzinho que fecha as janelas não tiver subido),
+  a forma garantida é **Ctrl+Shift+Esc**, que abre o Gerenciador de Tarefas do Windows por
   cima do quiosque (esse atalho é do Windows, não do navegador, então sempre funciona).
   Encontre **Google Chrome** na lista, clique nele e em **Finalizar tarefa**.
 
@@ -79,9 +111,10 @@ automaticamente no outro monitor; se o Chrome pedir permissão para "gerenciar j
 todas as telas", aceite para isso funcionar sozinho. Se não conseguir sozinho, abre uma
 janela normal — é só arrastar para o outro monitor e apertar F11 nela.
 
-**Importante:** as duas janelas são independentes. Cada uma só reage ao teclado quando está
-em foco (a última clicada). Isso é de propósito, para não precisar de servidor nem de
-internet — cada tela é uma "sala" própria de balões.
+As duas janelas funcionam como uma sala só, igual ao modo quiosque de 2 telas (veja "Com as
+duas telas abertas" acima). Só o teclado é que continua indo para a janela em foco (a última
+clicada) — mas tanto faz qual delas seja: as teclas da metade direita do teclado fazem o balão
+subir na outra tela do mesmo jeito.
 
 ## Voz
 

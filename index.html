@@ -368,6 +368,32 @@
   }
 
   #dica.oculto { opacity: 0; }
+
+  /* ---------- despedida (palavra "sair", quando o navegador não deixa fechar) ---------- */
+
+  #despedida {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: rgba(255, 255, 255, .92);
+    color: #2b4a63;
+    font-size: 9vh;
+    animation: aparece-despedida .5s ease-out;
+  }
+
+  #despedida small {
+    display: block;
+    margin-top: 2vh;
+    font-size: 2.6vh;
+    opacity: .75;
+  }
+
+  @keyframes aparece-despedida { from { opacity: 0; } }
 </style>
 
 <div id="ceu">
@@ -406,9 +432,16 @@
   const ceuNoite = document.getElementById('ceu-noite');
   const ehSegunda = new URLSearchParams(location.search).get('tela') === '2';
 
-  const MAX_BALOES  = 25;
+  // as duas telas formam uma sala só: cada uma tem um id, e a principal é a
+  // tela 1 (é nela que as palavras secretas sempre se montam)
+  const TELA_PRINCIPAL = '1';
+  const MEU_ID = ehSegunda ? '2' : '1';
+
+  const MAX_BALOES  = 25;  // total somando as duas telas
   const MAX_CONFETE = 140;
   const EGG_DURACAO = 1.6; // segundos do deslize suave até a posição da palavra secreta
+  const CRUZA_DUR   = 0.9; // segundos que um balão leva para atravessar de uma tela para a outra
+  const ALTURA_PALAVRA = 0.46; // fração da altura da tela onde a palavra secreta se monta
 
   const rand  = (a, b) => a + Math.random() * (b - a);
   const pick  = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -418,6 +451,7 @@
   addEventListener('resize', () => {
     W = innerWidth; H = innerHeight;
     for (const b of baloes) {
+      if (b.estado === 'chega' || b.estado === 'sai') continue; // estão fora da tela de propósito
       b.alvoY = clamp(b.alvoY, H * 0.30, H * 0.58);
       b.x = clamp(b.x, 80, W - 80);
     }
@@ -569,8 +603,15 @@
   const ELOGIOS = ['Boa!', 'Parabéns!', 'Muito bem!', 'Legal!'];
 
   // easter egg: se digitada por completo (com o quadro de balões vazio no
-  // início), os balões se organizam soletrando a palavra e a voz a fala
+  // início, contando as duas telas), os balões se organizam soletrando a
+  // palavra na tela principal e a voz a fala
   const PALAVRAS_SECRETAS = ['Arthur', 'Gustavo', 'Daniela'];
+
+  // saída do adulto: mesma regra (só começa com o quadro vazio, ou seja, Esc
+  // antes), mas em vez de soletrar, estoura tudo e fecha as duas telas
+  const PALAVRA_SAIR = 'SAIR';
+
+  const TODAS_PALAVRAS = PALAVRAS_SECRETAS.map(p => p.toUpperCase()).concat(PALAVRA_SAIR);
 
   let voz = null;
   function carregaVozes() {
@@ -608,33 +649,75 @@
   const baloes = [];
   const confetes = [];
 
-  // rastreamento da tentativa atual de easter egg
-  let sequenciaAtual  = [];
-  let sequenciaBaloes = [];
+  // Rastreamento da tentativa atual de palavra reservada: [{ id, ch, tela }].
+  // A sequência é replicada nas duas telas, então a palavra pode ser digitada
+  // metade numa e metade na outra — trocar o foco no meio não atrapalha.
+  let sequencia = [];
 
-  // posição horizontal segue a posição da tecla no teclado
-  const FILEIRAS = ['1234567890', 'QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+  function defineSequencia(nova, propaga) {
+    sequencia = nova;
+    if (propaga) enviaEvento('sequencia', { letras: sequencia });
+  }
+
+  let contadorId = 0;
+  function novoId() { return MEU_ID + ':' + (++contadorId); }
+
+  // Posição horizontal segue a posição da tecla no teclado. Com as duas telas
+  // abertas, os dois monitores lado a lado viram um teclado só: a metade
+  // esquerda do teclado sobe na tela 1, a direita na tela 2.
+  const FILEIRAS = [
+    ['12345', '67890'],
+    ['QWERT', 'YUIOP'],
+    ['ASDFG', 'HJKL'],
+    ['ZXCVB', 'NM']
+  ];
+
+  function achaTecla(ch) {
+    for (const [esq, dir] of FILEIRAS) {
+      let i = esq.indexOf(ch);
+      if (i >= 0) return { lado: 0, i, len: esq.length, iCheia: i, lenCheia: esq.length + dir.length };
+      i = dir.indexOf(ch);
+      if (i >= 0) return { lado: 1, i, len: dir.length, iCheia: esq.length + i, lenCheia: esq.length + dir.length };
+    }
+    return null;
+  }
+
+  // em qual tela esta tecla deve fazer o balão subir
+  function telaDaTecla(ch) {
+    if (!outraTelaPresente()) return MEU_ID;
+    if (ch === ' ') {
+      // a barra de espaço não é de mão nenhuma: vai para a tela mais vazia
+      return baloes.length <= espelho.baloes.length ? MEU_ID : OUTRO_ID;
+    }
+    const p = achaTecla(ch);
+    if (!p) return MEU_ID;
+    return p.lado === 0 ? '1' : '2';
+  }
 
   function xDaTecla(ch) {
     let frac = Math.random();
     if (ch === ' ') {
       frac = 0.5; // barra de espaço fica centralizada embaixo do teclado
     } else {
-      for (const f of FILEIRAS) {
-        const i = f.indexOf(ch);
-        if (i >= 0) { frac = (i + 0.5) / f.length; break; }
-      }
+      const p = achaTecla(ch);
+      // com duas telas, a metade do teclado se espalha pela largura inteira
+      // desta tela; sozinha, a fileira inteira se espalha por ela, como sempre
+      if (p) frac = outraTelaPresente() ? (p.i + 0.5) / p.len : (p.iCheia + 0.5) / p.lenCheia;
     }
     const m = 120;
     return clamp(m + frac * (W - 2 * m) + rand(-35, 35), 80, W - 80);
   }
 
-  function criaBalao(ch) {
-    if (baloes.length >= MAX_BALOES) soltaBalao(baloes[0]);
+  // opts: { id, nasc, hue, tam, silencioso, chegaEm, eggAlvoX } — tudo opcional.
+  // "silencioso" é para balão que nasce por ordem da outra tela: o som e a voz
+  // saem sempre na tela onde a criança apertou a tecla, porque uma janela que
+  // nunca foi clicada tem o áudio bloqueado pelo Chrome e ficaria muda.
+  function criaBalao(ch, opts) {
+    opts = opts || {};
 
-    const tam = rand(90, 170);
+    const tam = opts.tam != null ? opts.tam : rand(90, 170);
     const alt = tam * 1.22;
-    const hue = Math.floor(rand(0, 360));
+    const hue = opts.hue != null ? opts.hue : Math.floor(rand(0, 360));
     const c1  = `hsl(${hue} 85% 62%)`;
     const c2  = `hsl(${hue} 80% 44%)`;
 
@@ -650,21 +733,33 @@
       '<path d="M11 0 Q 2 18 11 34 Q 20 50 8 60"/></svg>';
     palco.appendChild(el);
 
+    // balão que está atravessando da outra tela chega estacionado fora da borda
+    // direita e invisível, até a hora combinada de entrar
+    const chegando = opts.chegaEm != null;
+    if (chegando) el.style.opacity = '0';
+
     const b = {
       el, ch, hue, tam, alt,
-      x: xDaTecla(ch),
-      y: H + alt,
-      alvoY: rand(H * 0.34, H * 0.55),
+      id: opts.id || novoId(),
+      nasc: opts.nasc || Date.now(),
+      x: chegando ? W + tam : xDaTecla(ch),
+      y: chegando ? H * ALTURA_PALAVRA : H + alt,
+      alvoY: chegando ? H * ALTURA_PALAVRA : rand(H * 0.34, H * 0.55),
       vel: rand(130, 190),
       fase: rand(0, Math.PI * 2),
-      estado: 'sobe',
+      estado: chegando ? 'chega' : 'sobe',
+      chegaEm: opts.chegaEm || null,
       px: 0, py: 0,
-      eggT0: null, eggAlvoX: null, eggAlvoY: null
+      eggT0: null, eggAlvoX: opts.eggAlvoX != null ? opts.eggAlvoX : null, eggAlvoY: null,
+      saiT0: null, saiX0: 0, saiY0: 0
     };
     baloes.push(b);
-    desenhaBalao(b, 0);
-    somSurgir();
-    if (ch !== ' ') fala(NOMES[ch] || ch);
+    if (!chegando) desenhaBalao(b, 0);
+    if (!opts.silencioso) {
+      somSurgir();
+      if (ch !== ' ') fala(NOMES[ch] || ch);
+    }
+    publicaInventario();
     return b;
   }
 
@@ -673,33 +768,90 @@
     const i = baloes.indexOf(b);
     if (i >= 0) baloes.splice(i, 1);
     b.estado = 'vai';
+    b.eggT0 = null;
     fugindo.push(b);
+    publicaInventario();
   }
 
   const fugindo = [];
 
-  function estoura(b) {
+  // tira o balão da tela sem estouro nem confete (ele foi embora para a outra
+  // tela, ou a tela inteira está sendo limpa)
+  function removeBalao(b) {
+    const i = baloes.indexOf(b);
+    if (i >= 0) baloes.splice(i, 1);
+    b.el.remove();
+    publicaInventario();
+  }
+
+  function todosOsBaloes() {
+    return baloes.length + espelho.baloes.length;
+  }
+
+  // solta o balão mais antigo das DUAS telas quando o limite compartilhado
+  // estoura — a idade é comparada por b.nasc, que é o mesmo relógio nas duas
+  function garanteEspaco() {
+    if (todosOsBaloes() < MAX_BALOES) return;
+
+    const maisVelho = (lista) =>
+      lista.reduce((a, b) => (!a || b.nasc < a.nasc ? b : a), null);
+
+    const local  = maisVelho(baloes.filter(b => b.estado !== 'sai' && b.estado !== 'chega'));
+    const remoto = maisVelho(espelho.baloes);
+
+    if (local && (!remoto || local.nasc <= remoto.nasc)) {
+      soltaBalao(local);
+    } else if (remoto) {
+      espelho.baloes = espelho.baloes.filter(b => b.id !== remoto.id);
+      fantasmas.add(remoto.id);
+      enviaEvento('soltar', { id: remoto.id });
+    }
+  }
+
+  // "silencioso": nem som nem voz (o balão estourou por ordem da outra tela,
+  // que já fez o barulho). "semElogio": estoura com som, mas sem a frase — é o
+  // que a tela que está só obedecendo faz, senão as duas falam por cima uma da
+  // outra e não se entende nenhuma.
+  function estoura(b, silencioso, semElogio) {
     const i = baloes.indexOf(b);
     if (i < 0) return;
     baloes.splice(i, 1);
 
-    // se esse balão fazia parte de uma tentativa de easter egg em andamento,
-    // ela não pode mais se completar — abandona
-    if (sequenciaBaloes.includes(b)) { sequenciaAtual = []; sequenciaBaloes = []; }
+    // se esse balão fazia parte de uma tentativa de palavra reservada em
+    // andamento, ela não pode mais se completar — abandona nas duas telas
+    if (sequencia.some(s => s.id === b.id)) defineSequencia([], true);
 
-    somEstouro();
+    if (!silencioso) somEstouro();
     confeteEm(b.px, b.py, b.hue, 14);
     if (b.ch !== ' ') letraVoando(b.px, b.py, b.ch, b.tam);
 
     b.el.classList.add('estourou');
     setTimeout(() => b.el.remove(), 220);
 
-    if (b.ch !== ' ' && Math.random() < 0.34) fala(pick(ELOGIOS));
+    if (!silencioso && !semElogio && b.ch !== ' ' && Math.random() < 0.34) fala(pick(ELOGIOS));
+    publicaInventario();
+  }
+
+  // manda a outra tela estourar um balão que está lá — o som sai aqui, na tela
+  // onde a criança apertou a tecla
+  function estouraRemoto(info) {
+    espelho.baloes = espelho.baloes.filter(b => b.id !== info.id);
+    fantasmas.add(info.id);
+    if (sequencia.some(s => s.id === info.id)) defineSequencia([], true);
+    enviaEvento('estourar', { id: info.id });
+    somEstouro();
+    if (info.ch !== ' ' && Math.random() < 0.34) fala(pick(ELOGIOS));
   }
 
   // estoura todos os balões da tela, em ordem embaralhada e com pequenos
   // intervalos aleatórios entre cada um — uma "limpeza de tela" rápida
-  function estouraTodos() {
+  function estouraTodos(semElogio) {
+    // balão a caminho da outra tela (ou ainda estacionado esperando entrar)
+    // some sem estouro: ele está fora da tela, o confete viria do nada
+    for (const b of [...baloes]) {
+      if (b.estado === 'sai' || b.estado === 'chega') removeBalao(b);
+    }
+
     const ordem = [...baloes];
     for (let i = ordem.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -708,88 +860,187 @@
     let atraso = 0;
     for (const b of ordem) {
       atraso += rand(20, 60);
-      setTimeout(() => estoura(b), atraso);
+      setTimeout(() => estoura(b, false, semElogio), atraso);
     }
   }
 
+  // Esc limpa as duas telas de uma vez. Os balões estouram com som nas duas
+  // (cada estouro é de um balão que está mesmo ali), mas a frase de elogio sai
+  // só na tela que apertou o Esc — uma voz só, não duas atropelando.
+  function limpaTudo(propaga) {
+    estouraTodos(!propaga);
+    defineSequencia([], false); // o próprio 'limpar' já avisa a outra tela
+    if (propaga) enviaEvento('limpar');
+  }
+
   // trata uma tecla (letra, número ou espaço): continua/inicia uma tentativa
-  // de easter egg quando faz sentido, senão cria/estoura balão normalmente
+  // de palavra reservada quando faz sentido, senão cria/estoura balão
+  // normalmente — olhando sempre as DUAS telas
   function processaTecla(ch) {
-    if (sequenciaAtual.length === 0) {
-      if (baloes.length === 0 && PALAVRAS_SECRETAS.some(p => p[0].toUpperCase() === ch)) {
-        sequenciaAtual = [ch];
-        sequenciaBaloes = [criaBalao(ch)];
+    if (saindo) return;
+
+    if (sequencia.length === 0) {
+      // uma palavra reservada só começa com as duas telas vazias
+      if (todosOsBaloes() === 0 && TODAS_PALAVRAS.some(p => p[0] === ch)) {
+        defineSequencia([nasceBalao(ch)], true);
         checaPalavraCompleta();
         return;
       }
     } else {
-      const candidata = sequenciaAtual.join('') + ch;
-      if (PALAVRAS_SECRETAS.some(p => p.toUpperCase().startsWith(candidata))) {
-        sequenciaAtual.push(ch);
-        sequenciaBaloes.push(criaBalao(ch));
+      const candidata = sequencia.map(s => s.ch).join('') + ch;
+      if (TODAS_PALAVRAS.some(p => p.startsWith(candidata))) {
+        defineSequencia(sequencia.concat([nasceBalao(ch)]), true);
         checaPalavraCompleta();
         return;
       }
-      sequenciaAtual = [];
-      sequenciaBaloes = [];
+      defineSequencia([], true);
     }
 
-    const existente = baloes.find(b => b.ch === ch);
-    if (existente) estoura(existente);
-    else criaBalao(ch);
+    const local = baloes.find(b => b.ch === ch && b.estado !== 'sai' && b.estado !== 'chega');
+    if (local) { estoura(local); return; }
+
+    const remoto = espelho.baloes.find(b => b.ch === ch);
+    if (remoto) { estouraRemoto(remoto); return; }
+
+    nasceBalao(ch);
+  }
+
+  // cria o balão na tela que a tecla pede — esta ou a outra — e devolve
+  // { id, ch, tela } para o rastreamento das palavras reservadas
+  function nasceBalao(ch) {
+    garanteEspaco();
+
+    const destino = telaDaTecla(ch);
+    if (destino === MEU_ID) {
+      const b = criaBalao(ch);
+      return { id: b.id, ch, tela: MEU_ID, nasc: b.nasc };
+    }
+
+    const id = novoId();
+    const nasc = Date.now();
+    // já conta como existente aqui, sem esperar o inventário da outra tela
+    espelho.baloes.push({ id, ch, nasc });
+    enviaEvento('criar', { id, ch, nasc, para: destino });
+    somSurgir();
+    if (ch !== ' ') fala(NOMES[ch] || ch);
+    return { id, ch, tela: destino, nasc };
   }
 
   function checaPalavraCompleta() {
-    const atual = sequenciaAtual.join('');
+    const atual = sequencia.map(s => s.ch).join('');
+
+    if (atual === PALAVRA_SAIR) {
+      defineSequencia([], false); // o 'sair' já leva a notícia para a outra tela
+      iniciaSaida(true);
+      return;
+    }
+
     const palavra = PALAVRAS_SECRETAS.find(p => p.toUpperCase() === atual);
     if (!palavra) return;
-    ativaEasterEgg(palavra, sequenciaBaloes.slice());
-    sequenciaAtual = [];
-    sequenciaBaloes = [];
+
+    const letras = sequencia.map(s => ({ id: s.id, ch: s.ch, tela: s.tela }));
+    // a palavra sempre se monta na tela principal; se ela não estiver aberta
+    // (rodando só a segunda tela), monta aqui mesmo
+    const destino = (MEU_ID === TELA_PRINCIPAL || outraTelaPresente()) ? TELA_PRINCIPAL : MEU_ID;
+    defineSequencia([], false); // o 'egg' já leva a notícia para a outra tela
+
+    enviaEvento('egg', { palavra, letras, destino });
+    ativaEasterEgg(palavra, letras, destino, true);
   }
 
-  function ativaEasterEgg(palavra, lista) {
-    const n = lista.length;
+  // onde cada letra da palavra vai parar, na largura desta tela
+  function slotsDaPalavra(n) {
     const espaco = Math.max(40, Math.min(130, (W - 160) / Math.max(n - 1, 1)));
     const inicioX = W / 2 - (n - 1) * espaco / 2;
-    const y = H * 0.46;
+    const slots = [];
+    for (let i = 0; i < n; i++) slots.push(inicioX + i * espaco);
+    return slots;
+  }
 
-    lista.forEach((b, i) => {
-      b.eggAlvoX = inicioX + i * espaco;
-      b.eggAlvoY = y;
-      b.eggT0 = t;
+  // roda nas duas telas com a mesma lista: cada uma cuida dos balões que são
+  // seus — a tela de destino puxa os dela para o lugar da palavra, a outra
+  // manda os dela atravessarem
+  function ativaEasterEgg(palavra, letras, destino, falar) {
+    const slots = slotsDaPalavra(letras.length);
+    const y = H * ALTURA_PALAVRA;
+
+    letras.forEach((info, i) => {
+      const b = baloes.find(x => x.id === info.id);
+      if (!b) return; // esse balão é da outra tela
+      if (MEU_ID === destino) {
+        b.eggAlvoX = slots[i];
+        b.eggAlvoY = y;
+        b.eggT0 = t;
+      } else {
+        iniciaTravessia(b, i, letras.length, destino);
+      }
     });
 
     // espera os balões terminarem de se acomodar para só então falar o nome
     // (assim a última letra digitada também é ouvida, sem ser cortada)
-    setTimeout(() => fala(palavra), EGG_DURACAO * 1000);
+    if (falar) {
+      const houveTravessia = letras.some(info => info.tela !== destino);
+      const espera = (houveTravessia ? CRUZA_DUR : 0) + EGG_DURACAO;
+      setTimeout(() => fala(palavra), espera * 1000);
+    }
+  }
+
+  // o balão sai pela borda esquerda desta tela e a tela de destino o faz
+  // reentrar pela borda direita dela na hora combinada — os monitores ficam
+  // lado a lado, então parece um movimento só, contínuo entre as duas
+  function iniciaTravessia(b, slot, n, destino) {
+    b.estado = 'sai';
+    b.saiT0 = t;
+    b.saiX0 = b.px;
+    b.saiY0 = b.py;
+    b.eggT0 = null;
+
+    enviaEvento('atravessa', {
+      id: b.id, ch: b.ch, hue: b.hue, tam: b.tam, nasc: b.nasc,
+      slot, n, para: destino,
+      chegaEm: Date.now() + CRUZA_DUR * 1000
+    });
   }
 
   function desenhaBalao(b, t) {
-    let y = b.y, bal = 0, giro = 0;
-    if (b.estado === 'flutua') {
-      // a oscilação de flutuação entra aos poucos (não de uma vez) para não
-      // dar um "pulinho" no instante em que o balão termina de subir
-      const w = clamp((t - b.tFlutua) / 1.2, 0, 1);
-      y = b.alvoY + Math.sin(t * 1.6 + b.fase) * 10 * w;
-      bal = Math.sin(t * 0.9 + b.fase) * 20 * w + Math.sin(t * 1.1 + b.fase) * 10 * (1 - w);
-      giro = Math.sin(t * 0.9 + b.fase) * 4 * w + Math.sin(t * 1.1 + b.fase) * 3 * (1 - w);
-    } else {
-      bal = Math.sin(t * 1.1 + b.fase) * 10;
-      giro = Math.sin(t * 1.1 + b.fase) * 3;
-    }
-    let px = b.x + bal;
-    let py = y;
+    // ainda estacionado fora da tela, esperando a hora de entrar
+    if (b.estado === 'chega') return;
 
-    if (b.eggT0 != null) {
-      // puxa suavemente (sem teletransportar) até a posição da palavra do
-      // easter egg, não importa se o balão ainda está subindo ou flutuando
-      const p = clamp((t - b.eggT0) / EGG_DURACAO, 0, 1);
+    let px, py, giro = 0;
+
+    if (b.estado === 'sai') {
+      // acelera para fora pela borda esquerda, a caminho da outra tela
+      const p = clamp((t - b.saiT0) / CRUZA_DUR, 0, 1);
       const facil = 1 - Math.pow(1 - p, 3);
-      const alvoY = b.eggAlvoY + Math.sin(t * 1.6 + b.fase) * 6;
-      px += (b.eggAlvoX - px) * facil;
-      py += (alvoY - py) * facil;
-      giro *= (1 - facil);
+      px = b.saiX0 + (-b.tam - b.saiX0) * (p * p);
+      py = b.saiY0 + (H * ALTURA_PALAVRA - b.saiY0) * facil;
+    } else {
+      let y = b.y, bal = 0;
+      if (b.estado === 'flutua') {
+        // a oscilação de flutuação entra aos poucos (não de uma vez) para não
+        // dar um "pulinho" no instante em que o balão termina de subir
+        const w = clamp((t - b.tFlutua) / 1.2, 0, 1);
+        y = b.alvoY + Math.sin(t * 1.6 + b.fase) * 10 * w;
+        bal = Math.sin(t * 0.9 + b.fase) * 20 * w + Math.sin(t * 1.1 + b.fase) * 10 * (1 - w);
+        giro = Math.sin(t * 0.9 + b.fase) * 4 * w + Math.sin(t * 1.1 + b.fase) * 3 * (1 - w);
+      } else {
+        bal = Math.sin(t * 1.1 + b.fase) * 10;
+        giro = Math.sin(t * 1.1 + b.fase) * 3;
+      }
+      px = b.x + bal;
+      py = y;
+
+      if (b.eggT0 != null) {
+        // puxa suavemente (sem teletransportar) até a posição da palavra do
+        // easter egg, não importa se o balão ainda está subindo, flutuando ou
+        // acabou de entrar pela borda vindo da outra tela
+        const p = clamp((t - b.eggT0) / EGG_DURACAO, 0, 1);
+        const facil = 1 - Math.pow(1 - p, 3);
+        const alvoY = b.eggAlvoY + Math.sin(t * 1.6 + b.fase) * 6;
+        px += (b.eggAlvoX - px) * facil;
+        py += (alvoY - py) * facil;
+        giro *= (1 - facil);
+      }
     }
 
     b.px = px;
@@ -896,6 +1147,250 @@
   let arrastoInicioY = 0;
   let arrastoInicioTop = 0;
 
+  // ------------------------------------------------------- as duas telas como uma sala só
+  // Janelas do MESMO perfil do Chrome (ex.: botão "2ª janela") conversam por
+  // BroadcastChannel, que elas compartilham. As janelas do modo quiosque (.bat)
+  // usam perfis separados de propósito (senão o posicionamento nos monitores
+  // quebra), então essas conversam por um servidorzinho local (sync-server.ps1,
+  // subido pelo próprio .bat) — se ele não estiver rodando (modo normal, sem o
+  // .bat), as tentativas de fetch simplesmente falham silenciosamente.
+  //
+  // Os dois caminhos carregam o MESMO evento, então o mesmo evento pode chegar
+  // duas vezes: por isso cada um tem id e a gente ignora repetido.
+  //
+  // A segunda tela é opcional: sem ninguém do outro lado, nada disso muda o
+  // comportamento — a tela se vira sozinha exatamente como antes.
+
+  const CHAVE_PERIODO = 'baloes:periodo';
+  const CHAVE_FASE = 'baloes:fase';
+  const SYNC_URL = 'http://127.0.0.1:8935';
+  const SYNC_INTERVALO = 150;        // era 1 s — lento demais para balão
+  const INVENTARIO_INTERVALO = 200;  // no máximo 5 avisos por segundo
+  const BATIDA_INTERVALO = 1000;     // mesmo parada, a tela avisa que está viva
+  const SUMIU_DEPOIS = 3000;         // sem notícia por esse tempo, a outra tela não existe
+  // uma foto do inventário só é confiável sobre um balão meu depois que deu
+  // tempo do pedido chegar lá e voltar contado (ida + espera do próximo aviso)
+  const FOLGA_ESPELHO = 700;
+
+  const OUTRO_ID = MEU_ID === '1' ? '2' : '1';
+
+  // o que a outra tela tem, do jeito que ela contou por último
+  const espelho = { visto: 0, baloes: [] };
+  function outraTelaPresente() { return Date.now() - espelho.visto < SUMIU_DEPOIS; }
+
+  // balões que já mandei sumir de lá: enquanto um inventário atrasado ainda os
+  // mostrar, eles não podem voltar para a contagem (senão o limite manda
+  // embora um balão inocente a cada tecla)
+  const fantasmas = new Set();
+
+  let canalSync = null;
+  try { canalSync = new BroadcastChannel('baloes-sala'); } catch (err) { canalSync = null; }
+
+  let nEvento = 0;
+  let cursor = null;          // último número de evento lido do servidor
+  const vistos = new Set();   // ids já processados
+
+  function enviaEvento(tipo, dados) {
+    const ev = { id: MEU_ID + '#' + (++nEvento), de: MEU_ID, tipo, dados: dados || {} };
+    if (canalSync) { try { canalSync.postMessage(ev); } catch (err) { /* ignora */ } }
+    fetch(SYNC_URL + '/eventos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ev)
+    }).catch(() => { /* sem servidor de sincronização (fora do modo quiosque) — tudo bem */ });
+  }
+
+  function aoReceber(ev) {
+    if (!ev || !ev.tipo || ev.de === MEU_ID) return;
+    if (vistos.has(ev.id)) return;
+    if (vistos.size > 400) vistos.clear();
+    vistos.add(ev.id);
+
+    espelho.visto = Date.now(); // qualquer evento já prova que a outra tela está viva
+    const d = ev.dados || {};
+
+    switch (ev.tipo) {
+      case 'inventario': {
+        // O inventário é uma FOTO de alguns décimos atrás. Trocar a lista
+        // inteira por ela apagaria da contagem os balões que acabei de mandar
+        // criar lá (a foto é mais velha que eles) — e aí o limite das 25 nunca
+        // dispararia. Então: a foto manda no que é mais velho que ela, e o que
+        // nasceu depois dela continua valendo.
+        const lista = (Array.isArray(d.baloes) ? d.baloes : []).filter(b => !fantasmas.has(b.id));
+        const quando = (d.em || 0) - FOLGA_ESPELHO;
+        const recentes = espelho.baloes.filter(b =>
+          b.nasc > quando && !lista.some(x => x.id === b.id));
+
+        // id que já sumiu de lá não precisa mais de vigilância
+        for (const id of [...fantasmas]) {
+          if (!(d.baloes || []).some(b => b.id === id)) fantasmas.delete(id);
+        }
+
+        espelho.baloes = lista.concat(recentes);
+        confereSequencia();
+        break;
+      }
+
+      case 'criar':
+        if (d.para !== MEU_ID) break;
+        criaBalao(d.ch, { id: d.id, nasc: d.nasc, silencioso: true });
+        break;
+
+      case 'estourar': {
+        const b = baloes.find(x => x.id === d.id);
+        if (b) estoura(b, true);
+        break;
+      }
+
+      case 'soltar': {
+        const b = baloes.find(x => x.id === d.id);
+        if (b) soltaBalao(b);
+        break;
+      }
+
+      case 'limpar':
+        limpaTudo(false);
+        break;
+
+      case 'sequencia':
+        // a palavra pode estar sendo digitada na outra tela: acompanha a
+        // tentativa dela, para poder continuar de onde parou se o foco vier
+        defineSequencia(Array.isArray(d.letras) ? d.letras : [], false);
+        break;
+
+      case 'egg':
+        defineSequencia([], false);
+        ativaEasterEgg(d.palavra, d.letras || [], d.destino, false);
+        break;
+
+      case 'atravessa':
+        if (d.para !== MEU_ID) break;
+        recebeTravessia(d);
+        break;
+
+      case 'sair':
+        iniciaSaida(false);
+        break;
+
+      case 'periodo':
+        if (d.periodo === 'dia' || d.periodo === 'noite') receberSync(d.periodo, d.faseIndex);
+        break;
+    }
+  }
+
+  // balão vindo da outra tela: nasce estacionado fora da borda direita e entra
+  // na hora combinada (as duas janelas são deste PC, o relógio é o mesmo)
+  function recebeTravessia(d) {
+    if (baloes.some(b => b.id === d.id)) return;
+    criaBalao(d.ch, {
+      id: d.id, nasc: d.nasc, hue: d.hue, tam: d.tam,
+      silencioso: true,
+      chegaEm: d.chegaEm,
+      eggAlvoX: slotsDaPalavra(d.n)[d.slot]
+    });
+  }
+
+  // Rede de segurança: quem é dono do balão já avisa quando ele estoura, mas
+  // se esse aviso se perder, aqui a tentativa também morre ao ver que um balão
+  // dela sumiu da outra tela. A folga é generosa de propósito — abortar por
+  // engano estragaria a palavra na cara do usuário.
+  function confereSequencia() {
+    if (!sequencia.length) return;
+    const agora = Date.now();
+    const sumiu = sequencia.some(s =>
+      s.tela !== MEU_ID &&
+      !espelho.baloes.some(b => b.id === s.id) &&
+      agora - s.nasc > 1200); // inventário mais velho que a criação não vale
+    if (sumiu) defineSequencia([], true);
+  }
+
+  let inventarioSujo = true;
+  let ultimoInventario = 0;
+
+  // só marca; quem manda de fato é o timer abaixo, para uma limpeza de 25
+  // balões não virar 25 requisições
+  function publicaInventario() { inventarioSujo = true; }
+
+  setInterval(() => {
+    const agora = Date.now();
+    if (!inventarioSujo && agora - ultimoInventario < BATIDA_INTERVALO) return;
+    if (inventarioSujo && agora - ultimoInventario < INVENTARIO_INTERVALO) return;
+    inventarioSujo = false;
+    ultimoInventario = agora;
+    enviaEvento('inventario', {
+      em: agora, // hora da foto: é o que diz o que nela está velho demais para valer
+      baloes: baloes
+        .filter(b => b.estado !== 'sai' && b.estado !== 'chega')
+        .map(b => ({ id: b.id, ch: b.ch, nasc: b.nasc }))
+    });
+  }, 100);
+
+  // a outra tela fechou: os balões dela param de ocupar a cota compartilhada
+  setInterval(() => {
+    if (!outraTelaPresente() && espelho.baloes.length) espelho.baloes = [];
+  }, 1000);
+
+  function persistirEstado() {
+    try {
+      localStorage.setItem(CHAVE_PERIODO, periodo);
+      localStorage.setItem(CHAVE_FASE, String(faseIndex));
+    } catch (err) { /* localStorage indisponível — sem sincronização, sem problema */ }
+  }
+
+  function consultaSync() {
+    const url = SYNC_URL + '/eventos' + (cursor == null ? '' : '?desde=' + cursor);
+    fetch(url).then(r => r.ok ? r.json() : null).then(dados => {
+      if (!dados) return;
+      const primeira = cursor == null;
+      cursor = dados.seq;
+      if (primeira) {
+        // janela aberta depois da outra: adota o período que já estava valendo
+        if (dados.periodo === 'dia' || dados.periodo === 'noite') {
+          receberSync(dados.periodo, dados.faseIndex);
+        }
+        return;
+      }
+      if (Array.isArray(dados.eventos)) for (const ev of dados.eventos) aoReceber(ev);
+    }).catch(() => { /* sem servidor de sincronização (fora do modo quiosque) — tudo bem */ });
+  }
+
+  function receberSync(novoPeriodo, faseRemota) {
+    if (transicionando || novoPeriodo === periodo) return;
+    comitarTransicao(novoPeriodo, { origem: 'sync', faseRemota });
+  }
+
+  if (canalSync) {
+    canalSync.onmessage = e => aoReceber(e.data);
+  }
+
+  addEventListener('storage', e => {
+    if (e.key === CHAVE_PERIODO && (e.newValue === 'dia' || e.newValue === 'noite')) {
+      const fase = parseInt(localStorage.getItem(CHAVE_FASE), 10);
+      receberSync(e.newValue, Number.isNaN(fase) ? undefined : fase);
+    }
+  });
+
+  setInterval(consultaSync, SYNC_INTERVALO);
+  consultaSync();
+
+  (function aplicarEstadoInicial() {
+    let periodoSalvo = null, faseSalva;
+    try {
+      periodoSalvo = localStorage.getItem(CHAVE_PERIODO);
+      faseSalva = parseInt(localStorage.getItem(CHAVE_FASE), 10);
+    } catch (err) { /* sem storage — começa em dia, do jeito de sempre */ }
+
+    if (periodoSalvo !== 'noite') return;
+
+    periodo = 'noite';
+    faseIndex = Number.isNaN(faseSalva) ? 0 : faseSalva;
+    lua.dataset.fase = FASES[faseIndex];
+    sol.style.top = topoBaixo() + 'px';
+    lua.style.top = topoCima() + 'px';
+    ceuNoite.classList.add('visivel');
+    document.body.classList.add('noite');
+  })();
+
   function podeArrastar(el) {
     if (transicionando) return false;
     if (el === sol) return periodo === 'dia';
@@ -945,7 +1440,8 @@
   addEventListener('pointerup', terminaArrasto);
   addEventListener('pointercancel', terminaArrasto);
 
-  function comitarTransicao(novoPeriodo) {
+  function comitarTransicao(novoPeriodo, opts = {}) {
+    const { origem = 'local', faseRemota } = opts;
     transicionando = true;
 
     const saindo   = novoPeriodo === 'noite' ? sol : lua;
@@ -957,16 +1453,24 @@
     saindo.style.top = topoBaixo() + 'px';
 
     if (novoPeriodo === 'noite') {
-      faseIndex = (faseIndex + 1) % FASES.length;
+      faseIndex = origem === 'sync' && !Number.isNaN(faseRemota) && faseRemota !== undefined
+        ? faseRemota
+        : (faseIndex + 1) % FASES.length;
       lua.dataset.fase = FASES[faseIndex];
     }
 
     entrando.style.top = topoCima() + 'px';
     ceuNoite.classList.toggle('visivel', novoPeriodo === 'noite');
     document.body.classList.toggle('noite', novoPeriodo === 'noite');
-    somTransicao(novoPeriodo);
+    if (origem === 'local') somTransicao(novoPeriodo);
 
     periodo = novoPeriodo;
+
+    if (origem === 'local') {
+      persistirEstado();
+      enviaEvento('periodo', { periodo, faseIndex });
+    }
+
     setTimeout(() => {
       transicionando = false;
       saindo.classList.remove('transicionando');
@@ -1016,11 +1520,30 @@
     ultimo = agora;
     t += dt;
 
-    for (const b of baloes) {
-      if (b.estado === 'sobe') {
+    const relogio = Date.now();
+    for (let i = baloes.length - 1; i >= 0; i--) {
+      const b = baloes[i];
+
+      if (b.estado === 'chega') {
+        // na hora combinada, entra pela borda direita — do outro lado da
+        // borda por onde saiu da outra tela — e o puxão da palavra o
+        // desacelera até o lugar dele, sem teletransporte
+        if (relogio < b.chegaEm) continue;
+        b.estado = 'flutua';
+        b.tFlutua = t;
+        b.x = W + b.tam / 2;
+        b.y = b.alvoY;
+        if (b.eggAlvoX == null) b.eggAlvoX = W / 2;
+        b.eggAlvoY = H * ALTURA_PALAVRA;
+        b.eggT0 = t;
+        b.el.style.opacity = '1';
+      } else if (b.estado === 'sai') {
+        if (t - b.saiT0 >= CRUZA_DUR) { removeBalao(b); continue; }
+      } else if (b.estado === 'sobe') {
         b.y -= b.vel * dt;
         if (b.y <= b.alvoY) { b.y = b.alvoY; b.estado = 'flutua'; b.tFlutua = t; }
       }
+
       desenhaBalao(b, t);
     }
 
@@ -1062,7 +1585,7 @@
   // deve continuar funcionando, é a saída de emergência do adulto).
   addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      if (!e.repeat) estouraTodos();
+      if (!e.repeat) limpaTudo(true);
       return;
     }
 
@@ -1151,6 +1674,7 @@
     let alvo = null;
     for (let i = baloes.length - 1; i >= 0; i--) {
       const b = baloes[i];
+      if (b.estado === 'chega' || b.estado === 'sai') continue; // fora da tela
       const dx = (x - b.px) / (b.tam / 2);
       const dy = (y - b.py) / (b.alt / 2);
       if (dx * dx + dy * dy <= 1) { alvo = b; break; }
@@ -1201,15 +1725,75 @@
       }
     } catch (err) { /* sem permissão: abre janela normal para arrastar */ }
 
-    const w = window.open(url, 'baloes2', opcoes);
-    if (w) w.focus();
+    janelaSegunda = window.open(url, 'baloes2', opcoes);
+    if (janelaSegunda) janelaSegunda.focus();
   });
+
+  // ------------------------------------------------------------------ sair
+
+  let janelaSegunda = null;
+  let saindo = false;
+
+  // palavra "sair": estoura os balões das duas telas e fecha as duas janelas
+  function iniciaSaida(propaga) {
+    if (saindo) return;
+    saindo = true;
+    travaSaida = false; // senão o beforeunload abre a confirmação nativa na saída
+    if (propaga) enviaEvento('sair');
+    limpaTudo(false);
+    // a despedida também sai só na tela que mandou sair — as duas falando
+    // "Tchau!" ao mesmo tempo vira um eco embolado
+    if (propaga) fala('Tchau!');
+    setTimeout(fechaJanela, 1800); // dá tempo dos estouros terminarem
+  }
+
+  function fechaJanela() {
+    // a janela aberta pelo botão "2ª janela" é filha desta, e essa fecha mesmo
+    try {
+      if (janelaSegunda && !janelaSegunda.closed) janelaSegunda.close();
+    } catch (err) { /* ignora */ }
+
+    // no modo quiosque o Chrome ignora window.close() (a janela não foi aberta
+    // por script), então quem fecha de verdade é o servidorzinho local
+    pedeParaOServidorFechar();
+    try { window.close(); } catch (err) { /* ignora */ }
+
+    // se ainda estamos aqui, o navegador não deixou fechar: despedida
+    setTimeout(mostraDespedida, 1200);
+  }
+
+  // Tem que ser sendBeacon, não fetch: o window.close() logo abaixo mata a
+  // página, e com ela um fetch que ainda não tinha saído — o pedido se perdia e
+  // o quiosque ficava aberto. O beacon o navegador entrega mesmo com a página
+  // já indo embora.
+  function pedeParaOServidorFechar() {
+    const url = SYNC_URL + '/sair';
+    let enviado = false;
+    try {
+      enviado = typeof navigator !== 'undefined' && navigator.sendBeacon
+        ? navigator.sendBeacon(url, '')
+        : false;
+    } catch (err) { enviado = false; }
+    if (!enviado) {
+      try {
+        fetch(url, { method: 'POST', keepalive: true }).catch(() => { /* sem servidor */ });
+      } catch (err) { /* sem servidor — segue para a despedida */ }
+    }
+  }
+
+  function mostraDespedida() {
+    if (document.getElementById('despedida')) return;
+    const el = document.createElement('div');
+    el.id = 'despedida';
+    el.innerHTML = 'Tchau! 🎈<small>Pode fechar a janela.</small>';
+    document.body.appendChild(el);
+  }
 
   if (ehSegunda) {
     ui.remove();
     sol.remove();
     lua.remove();
-    dica.textContent = 'Clique aqui para começar nesta tela 🎈';
+    dica.textContent = 'Continuação da outra tela — clique para tela cheia 🎈';
   }
 
   mostraUI();
