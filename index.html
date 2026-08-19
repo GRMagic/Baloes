@@ -444,7 +444,8 @@
   const sol      = document.getElementById('sol');
   const lua      = document.getElementById('lua');
   const ceuNoite = document.getElementById('ceu-noite');
-  const ehSegunda = new URLSearchParams(location.search).get('tela') === '2';
+  const parametros = new URLSearchParams(location.search);
+  const ehSegunda = parametros.get('tela') === '2';
 
   // as duas telas formam uma sala só: cada uma tem um id, e a principal é a
   // tela 1 (é nela que as palavras secretas sempre se montam)
@@ -619,7 +620,13 @@
   // easter egg: se digitada por completo (com o quadro de balões vazio no
   // início, contando as duas telas), os balões se organizam soletrando a
   // palavra na tela principal e a voz a fala
-  const PALAVRAS_SECRETAS = ['Arthur', 'Gustavo', 'Daniela'];
+  //
+  // a lista padrão pode ser sobrescrita via querystring, ex.:
+  // ?palavras=Ana,Pedro,Maria
+  const parametroPalavras = parametros.get('palavras');
+  const PALAVRAS_SECRETAS = parametroPalavras
+    ? parametroPalavras.split(',').map(p => p.trim()).filter(Boolean)
+    : ['Arthur', 'Gustavo', 'Daniela'];
 
   // saída do adulto: mesma regra (só começa com o quadro vazio, ou seja, Esc
   // antes), mas em vez de soletrar, estoura tudo e fecha as duas telas
@@ -1722,7 +1729,9 @@
   document.getElementById('btFull').addEventListener('click', telaCheia);
 
   document.getElementById('btSegunda').addEventListener('click', async () => {
-    const url = location.href.split('?')[0].split('#')[0] + '?tela=2';
+    const paramsSegunda = new URLSearchParams(location.search);
+    paramsSegunda.set('tela', '2');
+    const url = location.href.split('?')[0].split('#')[0] + '?' + paramsSegunda.toString();
     let opcoes = 'popup=yes,width=1200,height=800,left=80,top=80';
 
     try {
