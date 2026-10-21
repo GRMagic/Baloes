@@ -606,9 +606,9 @@
   // ------------------------------------------------------------------ voz
 
   const NOMES = {
-    A: 'A', B: 'B', C: 'C', D: 'D', E: 'E', F: 'F', 
+    A: 'A', B: 'B', C: 'C', D: 'D', E: 'Ê, de estacionamento', F: 'F', 
     G: 'G', H: 'H', I: 'I', J: 'J', K: 'K', L: 'L', 
-    M: 'M', N: 'N', O: 'Ó', P: 'P', Q: 'Q', R: 'R', 
+    M: 'M', N: 'N', O: 'Ô', P: 'P', Q: 'Q', R: 'R', 
     S: 'S', T: 'T', U: 'U', V: 'V', W: 'W', X: 'X', 
     Y: 'Y', Z: 'Z', 'Ç': 'Cê cedilha',
     '0': '0', '1': '1', '2': '2', '3': '3', '4': '4',
@@ -626,7 +626,7 @@
   const parametroPalavras = parametros.get('palavras');
   const PALAVRAS_SECRETAS = parametroPalavras
     ? parametroPalavras.split(',').map(p => p.trim()).filter(Boolean)
-    : ['Arthur', 'Gustavo', 'Daniela', 'Muller'];
+    : ['Arthur', 'Gustavo', 'Daniela', 'Muller', 'MAMAE', 'PAPAI'];
 
   // saída do adulto: mesma regra (só começa com o quadro vazio, ou seja, Esc
   // antes), mas em vez de soletrar, estoura tudo e fecha as duas telas
