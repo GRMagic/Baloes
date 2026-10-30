@@ -6,7 +6,7 @@
 // A página é uma sala de no máximo duas telas: o monitor principal do Windows
 // vira a tela 1 e o próximo monitor, a tela 2. Com um monitor só, abre só a 1.
 
-const { app, BrowserWindow, Menu, ipcMain, screen } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, screen, shell } = require('electron');
 const crypto = require('crypto');
 const fs = require('fs/promises');
 const path = require('path');
@@ -38,7 +38,12 @@ function abreTela(display, tela) {
 
   // arrastar um arquivo para dentro da janela navegaria para ele
   janela.webContents.on('will-navigate', e => e.preventDefault());
-  janela.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  // janela nova, nunca; só o endereço do projeto (rodapé das configurações)
+  // abre, e no navegador do computador
+  janela.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://github.com/GRMagic/Baloes')) shell.openExternal(url);
+    return { action: 'deny' };
+  });
 
   janela.loadFile(path.join(__dirname, 'index.html'), tela === '2' ? { query: { tela } } : {});
   return janela;

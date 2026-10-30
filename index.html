@@ -342,6 +342,9 @@
 
   /* ---------- barra de controles ---------- */
 
+  /* vale mesmo para quem tem display próprio (botões em flex, marca d'água...) */
+  [hidden] { display: none !important; }
+
   .ui {
     position: fixed;
     top: 10px;
@@ -378,7 +381,7 @@
 
   .ui.oculto + #marca { opacity: .6; }
 
-  .ui button {
+  .ui button, .ui .botao {
     font-family: inherit;
     font-size: 13px;
     padding: 7px 12px;
@@ -390,9 +393,29 @@
     box-shadow: 0 2px 6px rgba(0,0,0,.15);
   }
 
-  .ui button:hover { background: #fff; }
+  .ui button:hover, .ui .botao:hover { background: #fff; }
 
-  .ui #btConfig {
+  /* explicação que aparece já ao passar o mouse (o title demora e é pequeno) */
+  .ui [data-dica] { position: relative; }
+  .ui [data-dica]:hover::after {
+    content: attr(data-dica);
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: max-content;
+    max-width: 270px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,.96);
+    color: #2b4a63;
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: left;
+    box-shadow: 0 3px 10px rgba(0,0,0,.2);
+    pointer-events: none;
+  }
+
+  .ui .icone {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -414,8 +437,6 @@
     cursor: default;
   }
 
-  #config[hidden] { display: none; }
-
   body.configurando #abelha { display: none; }
 
   #config .cartao {
@@ -436,7 +457,8 @@
   #config .campo > span:first-child { display: block; font-weight: bold; margin-bottom: 8px; }
   #config .linha { display: flex; gap: 8px; align-items: center; }
   #config small { display: block; margin-top: 6px; font-size: 13px; opacity: .75; }
-  #config small[hidden] { display: none; }
+  #config .marcar { margin-top: 10px; cursor: pointer; }
+  #config .marcar input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
   #config .erro { color: #c0392b; opacity: 1; }
 
   #config input, #config select, #config button {
@@ -471,6 +493,9 @@
   #config button:hover { background: #d0e3f0; }
   #config button.principal { display: block; margin-left: auto; background: #2f86c9; color: #fff; }
   #config button.principal:hover { background: #2774b0; }
+
+  #config .rodape { display: flex; align-items: center; gap: 12px; }
+  #config .rodape a { font-size: 13px; color: #2f86c9; opacity: .85; }
 
   #cfgPalavras { list-style: none; margin: 0 0 8px; padding: 0; }
   #cfgPalavras li { margin-bottom: 6px; }
@@ -544,11 +569,24 @@
 <div id="abelha"><span>🐝</span></div>
 
 <div class="ui" id="ui">
-  <button id="btConfig" type="button" title="Configurações" aria-label="Configurações">
+  <button id="btConfig" class="icone" type="button" aria-label="Configurações" data-dica="Configurações">
     <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
   </button>
-  <button id="btFull" type="button">Tela cheia</button>
-  <button id="btSegunda" type="button">2ª janela</button>
+  <a id="btBaixar" class="botao icone" hidden target="_blank" rel="noopener" aria-label="Baixar o instalador para Windows"
+     data-dica="Baixar o instalador para Windows. Instalado no computador, ele abre em tela cheia em todos os monitores e bloqueia a maioria das teclas de atalho (Alt+Tab, tecla Windows...), o que dificulta a criança sair do brinquedo sem querer.">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></svg>
+  </a>
+  <button id="btFull" class="icone" type="button" aria-label="Tela cheia" data-dica="Tela cheia (Esc sai dela)">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>
+  </button>
+  <button id="btSegunda" class="icone" type="button" aria-label="Abrir a segunda tela"
+          data-dica="Abrir a segunda tela, para usar dois monitores: os balões aparecem nos dois, como uma sala só">
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+      <rect x="2.5" y="3.5" width="19" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M9 21h6M12 16.5V21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <text x="12" y="13.8" text-anchor="middle" font-size="10" font-weight="bold" fill="currentColor">2</text>
+    </svg>
+  </button>
 </div>
 <div id="marca">Para fechar, estoure todos os balões (Esc) e escreva&nbsp;<b>SAIR</b></div>
 
@@ -573,8 +611,17 @@
         <button type="submit">Adicionar</button>
       </form>
       <small id="cfgPalavrasAviso">Letras e números, com espaço entre as palavras (“Maria Helena” se digita com o espaço).
-        Com ou sem acento: “Mamãe” vale digitando o ã ou o a, e o acento aparece quando a palavra se forma.
-        A palavra SAIR é sempre aceita: é ela que fecha o brinquedo.</small>
+        Com ou sem acento: “Mamãe” vale digitando o ã ou o a, e o acento aparece quando a palavra se forma.</small>
+    </div>
+
+    <div class="campo">
+      <span>Saída</span>
+      <span class="linha">
+        <label for="cfgSair">Palavra que fecha o brinquedo:</label>
+        <input id="cfgSair" type="text" maxlength="20" autocomplete="off" spellcheck="false">
+      </span>
+      <label class="linha marcar"><input id="cfgMostrarSaida" type="checkbox"> Mostrar a dica de como fechar no canto da tela</label>
+      <small id="cfgSairAviso">Ela só vale com a tela limpa: primeiro Esc, que estoura todos os balões, depois a palavra.</small>
     </div>
 
     <details class="campo" id="cfgFalasBloco">
@@ -594,7 +641,10 @@
         guardada no computador. Sem internet, o que ainda não foi baixado sai na voz da Maria, do Windows.</small>
     </div>
 
-    <button id="cfgFechar" type="button" class="principal">Pronto</button>
+    <div class="rodape">
+      <a id="cfgRepositorio" target="_blank" rel="noopener"></a>
+      <button id="cfgFechar" type="button" class="principal">Pronto</button>
+    </div>
   </div>
 </div>
 
@@ -608,6 +658,7 @@
   const abelha   = document.getElementById('abelha');
   const ui       = document.getElementById('ui');
   const dica     = document.getElementById('dica');
+  const marca    = document.getElementById('marca');
   const sol      = document.getElementById('sol');
   const lua      = document.getElementById('lua');
   const ceuNoite = document.getElementById('ceu-noite');
@@ -795,8 +846,9 @@
     : ['Mamãe', 'Papai'];
 
   // saída do adulto: mesma regra (só começa com o quadro vazio, ou seja, Esc
-  // antes), mas em vez de soletrar, estoura tudo e fecha as duas telas
-  const PALAVRA_SAIR = 'SAIR';
+  // antes), mas em vez de soletrar, estoura tudo e fecha as duas telas. A
+  // palavra se troca na engrenagem
+  const SAIR_PADRAO = 'SAIR';
 
   // as letras dos balões: maiúsculas e sem acento, menos o Ç (que é letra
   // própria). "Mamãe" se forma com M-A-M-A-E, digitando o ã ou não
@@ -821,15 +873,37 @@
   // como a palavra fica guardada: sem espaço nas pontas e um só entre as palavras
   function arrumaEspacos(p) { return p.trim().replace(/\s+/g, ' '); }
 
-  // motivo para recusar a palavra na lista, ou null se ela serve
-  function problemaNaPalavra(p, lista, ignorar) {
-    const teclas = teclasDaPalavra(p);
-    if (teclas.replace(/ /g, '').length < 2) return 'A palavra precisa de pelo menos 2 letras.';
-    // o espaço vale entre palavras ("Maria Helena"): ele também é digitado
+  // o que vale para a palavra secreta e para a de saída: letras e números,
+  // com espaço só entre palavras ("Maria Helena", que também se digita com ele)
+  function problemaDeFormato(teclas, minimo) {
+    if (teclas.replace(/ /g, '').length < minimo) return `A palavra precisa de pelo menos ${minimo} letras.`;
     if (!/^[A-Z0-9Ç]+( [A-Z0-9Ç]+)*$/.test(teclas)) return 'Use só letras e números, com um espaço entre as palavras.';
-    if (teclas === PALAVRA_SAIR) return 'SAIR já é a palavra que fecha o brinquedo.';
+    return null;
+  }
+
+  // motivo para recusar a palavra secreta, ou null se ela serve. Ela não pode
+  // começar com a palavra de saída: digitando-a, a saída se completaria no
+  // meio e fecharia o brinquedo
+  function problemaNaPalavra(p, lista, ignorar, sair) {
+    const teclas = teclasDaPalavra(p);
+    const teclasSair = teclasDaPalavra(sair);
+    const formato = problemaDeFormato(teclas, 2);
+    if (formato) return formato;
+    if (teclas === teclasSair) return `${sair.toUpperCase()} é a palavra que fecha o brinquedo.`;
+    if (teclas.startsWith(teclasSair)) return `Ela começa com ${sair.toUpperCase()}, a palavra que fecha o brinquedo: ele fecharia no meio dela.`;
     if (lista.some((q, i) => i !== ignorar && teclasDaPalavra(q) === teclas)) return 'Essa palavra já está na lista.';
     return null;
+  }
+
+  // motivo para recusar a palavra de saída, ou null se ela serve. Pelo menos 3
+  // letras, para não sair por acaso; e pela mesma razão de cima, nenhuma
+  // palavra secreta pode começar com ela
+  function problemaNaSaida(p, palavras) {
+    const teclas = teclasDaPalavra(p);
+    const formato = problemaDeFormato(teclas, 3);
+    if (formato) return formato;
+    const conflito = palavras.find(q => teclasDaPalavra(q).startsWith(teclas));
+    return conflito ? `A palavra secreta “${conflito}” começa com ela: o brinquedo fecharia no meio de “${conflito}”.` : null;
   }
 
   // ------------------------------------------------------- configurações
@@ -860,13 +934,18 @@
     try { salva = JSON.parse(localStorage.getItem(CHAVE_CONFIG)); } catch (err) { /* sem storage: fábrica */ }
     if (!salva || typeof salva !== 'object') salva = {};
     const max = Number(salva.maxBaloes);
+    const sair = typeof salva.palavraSair === 'string' && !problemaDeFormato(teclasDaPalavra(salva.palavraSair), 3)
+      ? arrumaEspacos(salva.palavraSair)
+      : SAIR_PADRAO;
     return {
       maxBaloes: Number.isInteger(max) ? clamp(max, MAX_MIN, MAX_MAX) : MAX_PADRAO,
       palavras: Array.isArray(salva.palavras)
-        ? salva.palavras.filter(p => typeof p === 'string' && !problemaNaPalavra(p, [], -1))
+        ? salva.palavras.filter(p => typeof p === 'string' && !problemaNaPalavra(p, [], -1, sair))
         : PALAVRAS_PADRAO.slice(),
       voz: typeof salva.voz === 'string' ? salva.voz : '', // '' = automática
-      falas: limpaFalas(salva.falas)
+      falas: limpaFalas(salva.falas),
+      palavraSair: sair,
+      mostrarSaida: salva.mostrarSaida !== false
     };
   }
 
@@ -874,7 +953,8 @@
   let TODAS_PALAVRAS = [];
 
   function aplicaConfig() {
-    TODAS_PALAVRAS = config.palavras.map(teclasDaPalavra).concat(PALAVRA_SAIR);
+    TODAS_PALAVRAS = config.palavras.map(teclasDaPalavra).concat(teclasDaPalavra(config.palavraSair));
+    atualizaMarca();
     carregaVozes();
     preparaVozGoogle(); // palavra nova ou volta para a voz do Google
   }
@@ -1271,7 +1351,7 @@
   function checaPalavraCompleta() {
     const atual = sequencia.map(s => s.ch).join('');
 
-    if (atual === PALAVRA_SAIR) {
+    if (atual === teclasDaPalavra(config.palavraSair)) {
       defineSequencia([], false); // o 'sair' já leva a notícia para a outra tela
       iniciaSaida(true);
       return;
@@ -2112,19 +2192,51 @@
 
   // ------------------------------------------------------------------ interface
 
+  // a dica de como fechar: some se o adulto desligou, e mostra a palavra escolhida
+  function atualizaMarca() {
+    marca.hidden = !config.mostrarSaida;
+    marca.querySelector('b').textContent = config.palavraSair.toUpperCase();
+  }
+
+  // Fora do app (no navegador), oferece o instalador para Windows se o GitHub
+  // tiver um publicado — o Action "Gerar instalador" publica a cada push na
+  // main, na release "instalador". Sem internet, ou sem instalador, o botão
+  // simplesmente não aparece. Ele fica junto da engrenagem e some com ela.
+  const REPOSITORIO = 'GRMagic/Baloes';
+  const btBaixar = document.getElementById('btBaixar');
+  if (!quiosque && !ehSegunda) {
+    fetch('https://api.github.com/repos/' + REPOSITORIO + '/releases/latest')
+      .then(r => r.ok ? r.json() : null)
+      .then(release => {
+        const instalador = release && (release.assets || []).find(a => /instalador.*\.exe$/i.test(a.name));
+        if (!instalador) return;
+        btBaixar.href = instalador.browser_download_url;
+        btBaixar.hidden = false;
+      })
+      .catch(() => { /* sem internet: sem botão */ });
+  }
+
   // Os controles (no app, só a engrenagem) ficam à vista por 5 s. Se na hora
   // de sumir o mouse estiver em cima deles, somem 2 s depois de ele sair; com
   // as configurações abertas não somem, e ao fechá-las a contagem recomeça.
   // Ao esconder, a marca d'água com a saída aparece (ver #marca).
+  //
+  // O "mouse em cima" é perguntado ao navegador (:hover) na hora, e não
+  // guardado de eventos de entrar e sair: um botão que aparece debaixo do
+  // mouse parado (o de baixar o instalador) pode não gerar o de sair, e aí os
+  // controles nunca sumiriam. Tem que ser '#ui:hover', e não ':hover' sozinho:
+  // a página roda em modo de compatibilidade (sem doctype), e nele um :hover
+  // sem classe ou id junto só vale para links.
   const UI_TEMPO = 5000;
   const UI_DEPOIS_DO_MOUSE = 2000;
+  const UI_CONFERE_MOUSE = 500;
   let timerUI = null;
-  let mouseNaUI = false;
   let esperandoMouse = false; // a hora de sumir chegou com o mouse em cima
 
   function mostraUI() {
     if (ehSegunda) return;
     ui.classList.remove('oculto');
+    esperandoMouse = false;
     contaParaEsconderUI(UI_TEMPO);
   }
 
@@ -2135,18 +2247,19 @@
 
   function escondeUI() {
     if (configAberta()) return; // fechaConfig recomeça a contagem
-    if (mouseNaUI) { esperandoMouse = true; return; }
-    ui.classList.add('oculto');
-  }
-
-  ui.addEventListener('pointerenter', () => { mouseNaUI = true; });
-  ui.addEventListener('pointerleave', () => {
-    mouseNaUI = false;
+    if (ui.matches('#ui:hover')) {
+      esperandoMouse = true;
+      contaParaEsconderUI(UI_CONFERE_MOUSE); // confere de novo daqui a pouco
+      return;
+    }
     if (esperandoMouse) {
+      // o mouse acabou de sair: ainda espera um pouco
       esperandoMouse = false;
       contaParaEsconderUI(UI_DEPOIS_DO_MOUSE);
+      return;
     }
-  });
+    ui.classList.add('oculto');
+  }
 
   let timerDica = null;
   function escondeDica() {
@@ -2194,7 +2307,16 @@
   const cfgAviso      = document.getElementById('cfgPalavrasAviso');
   const cfgVoz        = document.getElementById('cfgVoz');
   const cfgFalas      = document.getElementById('cfgFalas');
+  const cfgSair       = document.getElementById('cfgSair');
+  const cfgMostrarSaida = document.getElementById('cfgMostrarSaida');
+  const cfgSairAviso  = document.getElementById('cfgSairAviso');
   const AVISO_PALAVRAS = cfgAviso.innerHTML;
+  const AVISO_SAIR    = cfgSairAviso.innerHTML;
+
+  // rodapé: o endereço do projeto (no app, o main.js abre no navegador do PC)
+  const cfgRepositorio = document.getElementById('cfgRepositorio');
+  cfgRepositorio.href = 'https://github.com/' + REPOSITORIO;
+  cfgRepositorio.textContent = 'github.com/' + REPOSITORIO;
 
   cfgMax.min = MAX_MIN;
   cfgMax.max = MAX_MAX;
@@ -2223,7 +2345,10 @@
     preenchePalavras();
     preencheFalas();
     preencheVozes();
+    cfgSair.value = config.palavraSair;
+    cfgMostrarSaida.checked = config.mostrarSaida;
     avisaPalavras(null);
+    avisaSaida(null);
   }
 
   // um campo por tecla; em branco (o que mostra o exemplo cinza) é a própria
@@ -2255,11 +2380,33 @@
     }));
   }
 
-  function avisaPalavras(erro) {
-    cfgAviso.classList.toggle('erro', !!erro);
-    if (erro) cfgAviso.textContent = erro;
-    else cfgAviso.innerHTML = AVISO_PALAVRAS;
+  // o texto de ajuda de uma seção vira o erro, em vermelho, até dar certo
+  function avisa(el, ajuda, erro) {
+    el.classList.toggle('erro', !!erro);
+    if (erro) el.textContent = erro;
+    else el.innerHTML = ajuda;
   }
+  function avisaPalavras(erro) { avisa(cfgAviso, AVISO_PALAVRAS, erro); }
+  function avisaSaida(erro) { avisa(cfgSairAviso, AVISO_SAIR, erro); }
+
+  cfgSair.addEventListener('change', () => {
+    const nova = arrumaEspacos(cfgSair.value);
+    const erro = problemaNaSaida(nova, config.palavras);
+    if (erro) {
+      avisaSaida(erro);
+      cfgSair.value = config.palavraSair;
+      return;
+    }
+    config.palavraSair = nova;
+    cfgSair.value = nova;
+    salvaConfig();
+    avisaSaida(null);
+  });
+
+  cfgMostrarSaida.addEventListener('change', () => {
+    config.mostrarSaida = cfgMostrarSaida.checked;
+    salvaConfig();
+  });
 
   function preenchePalavras() {
     cfgPalavras.replaceChildren(...config.palavras.map((p, i) => {
@@ -2274,7 +2421,7 @@
       campo.setAttribute('aria-label', 'Palavra ' + (i + 1));
       campo.addEventListener('change', () => {
         const nova = arrumaEspacos(campo.value);
-        const erro = problemaNaPalavra(nova, config.palavras, i);
+        const erro = problemaNaPalavra(nova, config.palavras, i, config.palavraSair);
         if (erro) {
           avisaPalavras(nova ? erro : 'Para tirar uma palavra da lista, use o ✕.');
           campo.value = config.palavras[i];
@@ -2329,7 +2476,7 @@
     e.preventDefault();
     const nova = arrumaEspacos(cfgNovaPalavra.value);
     if (!nova) return;
-    const erro = problemaNaPalavra(nova, config.palavras, -1);
+    const erro = problemaNaPalavra(nova, config.palavras, -1, config.palavraSair);
     if (erro) { avisaPalavras(erro); return; }
     config.palavras.push(nova);
     salvaConfig();

@@ -28,10 +28,14 @@ Dois cliques em **`Gerar Executável.bat`**. Ele instala o que faltar e gera, na
   drive). Demora alguns segundos para abrir, porque se descompacta a cada vez.
 
 **Pelo GitHub:** a cada push na `main`, o GitHub gera o instalador sozinho
-(`.github/workflows/gerar-instalador.yml`). Para baixar: aba **Actions** do repositório →
-a execução mais recente de "Gerar instalador" → **Artifacts** → `Baloes-de-Letras-instalador`
-(vem num .zip com o instalador dentro). Também dá para gerar sem push, pelo botão **Run
-workflow** na mesma aba. Em repositório público isso não custa nada.
+(`.github/workflows/gerar-instalador.yml`) e o publica na release **"instalador"**, que é
+sempre a do último push: https://github.com/GRMagic/Baloes/releases/latest — dá para baixar
+sem login. Também dá para gerar sem push, pelo botão **Run workflow** na aba **Actions**. Em
+repositório público isso não custa nada.
+
+Aberta no navegador (fora do app), a página procura essa release e, se houver instalador,
+mostra um botão de **baixar** ao lado da engrenagem, explicando que, instalado, o brinquedo
+bloqueia a maioria das teclas de atalho.
 
 Junto do executável vai o `LICENCAS-DE-TERCEIROS.txt`, com as licenças de tudo o que o app
 redistribui (Electron, Koffi, o desenho da engrenagem do Material Icons, o NSIS do
@@ -62,8 +66,10 @@ informações" → "Executar assim mesmo".
 ## Configurações (engrenagem)
 
 Ao abrir, aparece por 5 segundos uma **engrenagem** no canto de cima, à direita da tela
-principal. Depois ela some e, no canto de cima à esquerda, fica uma marca d'água lembrando
-como fechar ("estoure todos os balões (Esc) e escreva SAIR"). Ela espera para sumir:
+principal. No navegador, ao lado dela ficam também os botões de baixar o instalador, tela
+cheia e segunda tela; todos explicam o que fazem quando o mouse passa por cima. Depois de 5
+segundos eles somem e, no canto de cima à esquerda, fica uma marca d'água lembrando como
+fechar ("estoure todos os balões (Esc) e escreva SAIR"). Eles esperam para sumir:
 
 - se o mouse estiver em cima dela na hora, some 2 segundos depois de o mouse sair;
 - com as configurações abertas não some, e ao fechá-las a contagem dos 5 segundos recomeça.
@@ -94,6 +100,10 @@ o mouse chega perto do topo. Clicando nela, abre o painel de configurações:
   campo (Enter ou clicando fora), a voz já fala o texto novo, para ouvir como ficou. Para
   o som da letra, use **Ê** e **Ô**: o E e o O sozinhos a voz pode ler como as palavras "e"
   e "o" (por isso o padrão deles já é Ê e Ô, e o do Ç é "Cê cedilha").
+- **Saída** — a palavra que fecha o brinquedo (de fábrica, **SAIR**), com pelo menos 3
+  letras. Nenhuma palavra secreta pode começar com ela (senão o brinquedo fecharia no meio
+  da palavra), e o painel avisa se for o caso. Também dá para **esconder a marca d'água** que
+  lembra como fechar.
 - **Voz** — no app, a primeira é a do **Google** (a de fábrica); depois vêm as vozes
   instaladas no Windows, as de português primeiro. No Chrome, a primeira é a "Automática",
   que escolhe a melhor de português sozinha. Trocar de voz já fala uma frase de teste, e o
@@ -101,7 +111,8 @@ o mouse chega perto do topo. Clicando nela, abre o painel de configurações:
 
 Tudo vale na hora para as duas telas e fica guardado para a próxima vez. Com o painel aberto,
 o teclado é do adulto (as teclas não fazem balão); **Pronto**, **Esc** ou um clique fora do
-painel fecham.
+painel fecham. No rodapé do painel fica o endereço do projeto no GitHub (no app, ele abre no
+navegador do computador).
 
 ## Com as duas telas abertas
 
@@ -171,10 +182,11 @@ dificilmente clica nisso sozinha.
 
 ## Sair
 
-**Aperte Esc e digite `sair`.** Os balões estouram, a voz se despede e as janelas fecham —
-as duas, se estiverem as duas abertas. É a saída do adulto.
+**Aperte Esc e digite `sair`** (ou a palavra que estiver nas configurações). Os balões
+estouram, a voz se despede e as janelas fecham — as duas, se estiverem as duas abertas. É a
+saída do adulto.
 
-O **Esc antes é obrigatório**: a palavra `sair` só começa a contar com a tela limpa, sem
+O **Esc antes é obrigatório**: a palavra de saída só começa a contar com a tela limpa, sem
 nenhum balão. É o que impede a criança de fechar o brinquedo sem querer batendo no teclado.
 
 Outras formas, se precisar:
@@ -189,8 +201,8 @@ Outras formas, se precisar:
 
 ## Usar nos dois monitores no Chrome
 
-Aberta direto no Chrome, clique em **"2ª janela"** (os botões aparecem junto da engrenagem,
-quando o mouse chega no topo). Ela tenta abrir automaticamente no outro monitor; se o Chrome
+Aberta direto no Chrome, clique no botão do **monitor com o 2** (os botões aparecem junto da
+engrenagem, quando o mouse chega no topo). Ela tenta abrir automaticamente no outro monitor; se o Chrome
 pedir permissão para "gerenciar janelas em todas as telas", aceite para isso funcionar
 sozinho. Se não conseguir sozinho, abre uma janela normal — é só arrastar para o outro
 monitor e apertar F11 nela.
