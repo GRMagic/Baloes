@@ -6,10 +6,20 @@
   "description": "Brinquedo de balões de letras em modo quiosque, em todos os monitores",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "empacotar": "electron-builder --win"
+  },
+  "build": {
+    "appId": "baloes.de.letras",
+    "files": ["index.html", "main.js", "preload.js", "teclado.js"],
+    "directories": { "output": "dist" },
+    "win": { "target": ["nsis", "portable"] },
+    "nsis": { "artifactName": "Balões de Letras - instalador.${ext}" },
+    "portable": { "artifactName": "Balões de Letras.${ext}" }
   },
   "devDependencies": {
-    "electron": "^45.1.0"
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0"
   },
   "dependencies": {
     "koffi": "^3.3.5"

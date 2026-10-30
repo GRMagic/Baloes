@@ -2011,14 +2011,41 @@
 
   // ------------------------------------------------------------------ interface
 
+  // Os controles (no app, só a engrenagem) ficam à vista por 5 s. Se na hora
+  // de sumir o mouse estiver em cima deles, somem 2 s depois de ele sair; com
+  // as configurações abertas não somem, e ao fechá-las a contagem recomeça.
+  // Ao esconder, a marca d'água com a saída aparece (ver #marca).
+  const UI_TEMPO = 5000;
+  const UI_DEPOIS_DO_MOUSE = 2000;
   let timerUI = null;
+  let mouseNaUI = false;
+  let esperandoMouse = false; // a hora de sumir chegou com o mouse em cima
+
   function mostraUI() {
     if (ehSegunda) return;
     ui.classList.remove('oculto');
-    clearTimeout(timerUI);
-    // ao esconder, a marca d'água com a saída aparece no lugar (ver #marca)
-    timerUI = setTimeout(() => ui.classList.add('oculto'), 5000);
+    contaParaEsconderUI(UI_TEMPO);
   }
+
+  function contaParaEsconderUI(ms) {
+    clearTimeout(timerUI);
+    timerUI = setTimeout(escondeUI, ms);
+  }
+
+  function escondeUI() {
+    if (configAberta()) return; // fechaConfig recomeça a contagem
+    if (mouseNaUI) { esperandoMouse = true; return; }
+    ui.classList.add('oculto');
+  }
+
+  ui.addEventListener('pointerenter', () => { mouseNaUI = true; });
+  ui.addEventListener('pointerleave', () => {
+    mouseNaUI = false;
+    if (esperandoMouse) {
+      esperandoMouse = false;
+      contaParaEsconderUI(UI_DEPOIS_DO_MOUSE);
+    }
+  });
 
   let timerDica = null;
   function escondeDica() {
@@ -2077,7 +2104,6 @@
     painel.hidden = false;
     document.body.classList.add('configurando');
     silenciaZumbido(true);
-    ui.classList.add('oculto');
   }
 
   function fechaConfig() {
@@ -2086,7 +2112,7 @@
     if (painel.contains(document.activeElement)) document.activeElement.blur();
     painel.hidden = true;
     document.body.classList.remove('configurando');
-    // a engrenagem não volta: fica a marca d'água (no app, nem o mouse a traz)
+    mostraUI(); // recomeça a contagem para a engrenagem sumir
   }
 
   function preencheConfig() {

@@ -17,6 +17,22 @@ Na **primeira vez**, o `.bat` instala o Electron sozinho: precisa do [Node.js](h
 instalado e de internet (são uns 100 MB, só uma vez). Depois disso, a internet só serve para
 baixar a voz do Google (veja "Voz"). Para rodar pelo terminal: `npm install` e `npm start`.
 
+## Gerar o executável
+
+Dois cliques em **`Gerar Executável.bat`**. Ele instala o que faltar e gera, na pasta `dist`:
+
+- **`Balões de Letras - instalador.exe`** — instala o brinquedo no computador (sem pedir
+  nada), cria o atalho na área de trabalho e no menu Iniciar e já abre. É o melhor para o
+  dia a dia: abre rápido. Para tirar, é como qualquer programa (Configurações → Aplicativos).
+- **`Balões de Letras.exe`** — um arquivo só, que roda sem instalar (dá para levar num pen
+  drive). Demora alguns segundos para abrir, porque se descompacta a cada vez.
+
+Os dois são independentes do Node.js e desta pasta: dá para copiar para outro computador com
+Windows. As configurações e as vozes baixadas ficam no computador
+(`%APPDATA%\Balões de Letras`), as mesmas do `Abrir Balões.bat`. O Windows pode avisar que o
+programa é de "editor desconhecido" (ele não é assinado digitalmente): é só clicar em "Mais
+informações" → "Executar assim mesmo".
+
 ## Como usar
 
 - **Apertar uma letra ou número** faz um balão subir com aquela letra, embaixo da tecla
@@ -34,8 +50,12 @@ baixar a voz do Google (veja "Voz"). Para rodar pelo terminal: `npm install` e `
 
 Ao abrir, aparece por 5 segundos uma **engrenagem** no canto de cima, à direita da tela
 principal. Depois ela some e, no canto de cima à esquerda, fica uma marca d'água lembrando
-como fechar ("estoure todos os balões (Esc) e escreva SAIR"). No app, a engrenagem não volta
-mais — nem com o mouse em cima de onde ela estava, nem depois de fechar o painel. É de
+como fechar ("estoure todos os balões (Esc) e escreva SAIR"). Ela espera para sumir:
+
+- se o mouse estiver em cima dela na hora, some 2 segundos depois de o mouse sair;
+- com as configurações abertas não some, e ao fechá-las a contagem dos 5 segundos recomeça.
+
+Depois que some, no app ela não volta mais — nem com o mouse em cima de onde ela estava. É de
 propósito, para a criança não achá-la passeando com a abelha: para mexer nas configurações
 depois, feche (`sair`) e abra de novo. Aberta no Chrome, ela volta junto com os botões quando
 o mouse chega perto do topo. Clicando nela, abre o painel de configurações:
