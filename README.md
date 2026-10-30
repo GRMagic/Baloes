@@ -1,7 +1,17 @@
 # Balões de Letras 🎈
 
+Fiz esta página só para o meu filho poder brincar com o teclado do meu computador: cada tecla
+vira um balão com a letra, e a voz fala o nome dela. É um projeto pessoal, feito em casa.
+
 Brinquedo simples para criançada apertar tecla e mexer o mouse. Roda como um app (Electron)
 em modo quiosque, ocupando todos os monitores — ou direto no **Google Chrome**.
+
+Ele foi feito e testado no **Chrome, no Windows** (o Edge, que usa o mesmo motor, também
+funciona). Aberto em outro navegador ou aparelho — Firefox, Safari, Chrome no Mac, celular,
+tablet —, a página mostra um aviso de que pode não funcionar direito, com um botão
+**Continuar mesmo assim**; depois disso o aviso não volta naquele navegador. O maior
+problema fora do computador é o teclado: num celular ou tablet sem teclado físico, não dá
+para fazer os balões.
 
 ## Como abrir
 
@@ -66,8 +76,9 @@ informações" → "Executar assim mesmo".
 ## Configurações (engrenagem)
 
 Ao abrir, aparece por 5 segundos uma **engrenagem** no canto de cima, à direita da tela
-principal. No navegador, ao lado dela ficam também os botões de baixar o instalador, tela
-cheia e segunda tela; todos explicam o que fazem quando o mouse passa por cima. Depois de 5
+principal, junto com o botão **ⓘ Sobre** (que conta por que a página existe). No navegador,
+ao lado deles ficam também os botões de baixar o instalador, tela cheia e segunda tela; todos
+explicam o que fazem quando o mouse passa por cima. Depois de 5
 segundos eles somem e, no canto de cima à esquerda, fica uma marca d'água lembrando como
 fechar ("estoure todos os balões (Esc) e escreva SAIR"). Eles esperam para sumir:
 

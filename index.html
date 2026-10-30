@@ -426,6 +426,50 @@
     padding: 0;
   }
 
+  /* ---------- caixas por cima de tudo: aviso de navegador e "sobre" ---------- */
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 250;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(20, 40, 60, .45);
+    cursor: default;
+  }
+
+  .modal .cartao {
+    max-width: 440px;
+    padding: 24px 28px;
+    border-radius: 18px;
+    background: #fff;
+    color: #2b4a63;
+    font-size: 16px;
+    line-height: 1.45;
+    box-shadow: 0 10px 40px rgba(0,0,0,.25);
+  }
+
+  .modal h2 { margin: 0 0 12px; font-size: 22px; }
+  .modal p { margin: 0 0 12px; }
+  .modal a { color: #2f86c9; }
+
+  .modal button {
+    display: block;
+    margin: 18px 0 0 auto;
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 999px;
+    background: #2f86c9;
+    color: #fff;
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .modal button:hover { background: #2774b0; }
+
   /* ---------- configurações ---------- */
 
   #config {
@@ -589,8 +633,33 @@
       <text x="12" y="13.8" text-anchor="middle" font-size="10" font-weight="bold" fill="currentColor">2</text>
     </svg>
   </button>
+  <button id="btSobre" class="icone" type="button" aria-label="Sobre" data-dica="Sobre esta página">
+    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><circle cx="12" cy="7.6" r=".7" fill="currentColor"/></svg>
+  </button>
 </div>
 <div id="marca">Para fechar, estoure todos os balões (Esc) e escreva&nbsp;<b>SAIR</b></div>
+
+<div id="aviso" class="modal" hidden>
+  <div class="cartao" role="alertdialog" aria-labelledby="avisoTitulo" aria-describedby="avisoTexto">
+    <h2 id="avisoTitulo">Feito para o Chrome no Windows</h2>
+    <p id="avisoTexto">Este brinquedo foi feito e testado no Google Chrome, no Windows. Em outros navegadores
+      ou aparelhos, ele pode não funcionar direito.</p>
+    <p id="avisoTeclado" hidden>Ele também precisa de um teclado: num celular ou tablet sem teclado, não dá para
+      fazer os balões.</p>
+    <button id="avisoContinuar" type="button">Continuar mesmo assim</button>
+  </div>
+</div>
+
+<div id="sobre" class="modal" hidden>
+  <div class="cartao" role="dialog" aria-labelledby="sobreTitulo">
+    <h2 id="sobreTitulo">Sobre os Balões de Letras</h2>
+    <p>Fiz esta página só para o meu filho poder brincar com o teclado do meu computador: cada tecla
+      vira um balão com a letra, e a voz fala o nome dela.</p>
+    <p>É um projeto pessoal, feito em casa. O código está aberto no
+      <a id="sobreRepositorio" target="_blank" rel="noopener">GitHub</a>.</p>
+    <button id="sobreFechar" type="button">Fechar</button>
+  </div>
+</div>
 
 <div id="config" hidden>
   <div class="cartao" role="dialog" aria-labelledby="cfgTitulo">
@@ -2078,6 +2147,13 @@
   // nenhuma página web consegue impedi-los, então nem tentamos (e Esc sempre
   // deve continuar funcionando, é a saída de emergência do adulto).
   addEventListener('keydown', e => {
+    // com o aviso de navegador ou o "sobre" aberto, as teclas não fazem balão
+    // (Enter e espaço apertam o botão que está com o foco; Esc fecha o "sobre")
+    if (modalAberto()) {
+      if (e.key === 'Escape' && !sobre.hidden) fechaSobre();
+      return;
+    }
+
     // com as configurações abertas o teclado é do adulto, para digitar nos campos
     if (configAberta()) {
       if (e.key === 'Escape') fechaConfig();
@@ -2144,7 +2220,7 @@
   });
 
   addEventListener('pointermove', e => {
-    if (configAberta()) return; // abelha escondida e sem zumbido
+    if (configAberta() || modalAberto()) return; // abelha escondida e sem zumbido
     moveArrasto(e);
 
     abelha.classList.add('visivel');
@@ -2171,7 +2247,7 @@
   }, { passive: true });
 
   addEventListener('pointerdown', e => {
-    if (e.target.closest('.ui, #config')) return;
+    if (e.target.closest('.ui, #config, .modal')) return;
     audio();
     escondeDica();
     if (ehSegunda && !quiosque) telaCheia();
@@ -2248,7 +2324,7 @@
   }
 
   function escondeUI() {
-    if (configAberta()) return; // fechaConfig recomeça a contagem
+    if (configAberta() || modalAberto()) return; // ao fechar, a contagem recomeça
     if (ui.matches('#ui:hover')) {
       esperandoMouse = true;
       contaParaEsconderUI(UI_CONFERE_MOUSE); // confere de novo daqui a pouco
@@ -2559,6 +2635,68 @@
     lua.remove();
     if (!quiosque) dica.textContent = 'Continuação da outra tela — clique para tela cheia 🎈';
   }
+
+  // ------------------------------------------------------- aviso de navegador
+  // A página foi feita e testada no Chrome no Windows (e no app). Em outro
+  // navegador ou aparelho — Firefox, Safari, Chrome no Mac, celular, tablet —
+  // avisa antes de começar; quem quiser segue mesmo assim, e o aviso não volta
+  // naquele navegador. O Edge e os outros com o motor do Chrome, no Windows,
+  // passaram nos mesmos testes e não são avisados.
+  const aviso = document.getElementById('aviso');
+  const sobre = document.getElementById('sobre');
+  const CHAVE_AVISO = 'baloes:avisoNavegador';
+
+  // o aviso e o "sobre": caixas por cima de tudo que, abertas, seguram o teclado
+  function modalAberto() { return !aviso.hidden || !sobre.hidden; }
+
+  function ambienteTestado() {
+    if (quiosque) return true;
+    // só os navegadores com o motor do Chrome têm o userAgentData; sem ele
+    // (Firefox, Safari, ou página fora de contexto seguro), vale o texto do agente
+    const ua = navigator.userAgentData;
+    if (ua) return !ua.mobile && ua.platform === 'Windows' && ua.brands.some(b => b.brand === 'Chromium');
+    const texto = navigator.userAgent;
+    return /Windows/.test(texto) && /Chrome\//.test(texto) && !/Mobile/.test(texto);
+  }
+
+  let jaAvisado = false;
+  try { jaAvisado = localStorage.getItem(CHAVE_AVISO) === 'ok'; } catch (err) { /* sem storage: avisa sempre */ }
+
+  // a tela 2 é aberta pela 1, que já avisou
+  if (!ehSegunda && !jaAvisado && !ambienteTestado()) {
+    // aparelho de toque: o problema maior é não ter teclado para os balões
+    document.getElementById('avisoTeclado').hidden = !matchMedia('(pointer: coarse)').matches;
+    aviso.hidden = false;
+    document.body.classList.add('configurando'); // esconde a abelha, como no painel
+    document.getElementById('avisoContinuar').focus();
+  }
+
+  document.getElementById('avisoContinuar').addEventListener('click', () => {
+    try { localStorage.setItem(CHAVE_AVISO, 'ok'); } catch (err) { /* avisa de novo da próxima vez */ }
+    aviso.hidden = true;
+    document.body.classList.remove('configurando');
+    mostraUI(); // a engrenagem ganha os 5 s dela depois do aviso
+  });
+
+  // "sobre": por que a página existe (botão "i", junto da engrenagem)
+  function abreSobre() {
+    sobre.hidden = false;
+    document.body.classList.add('configurando'); // esconde a abelha
+    silenciaZumbido(true);
+    document.getElementById('sobreFechar').focus();
+  }
+
+  function fechaSobre() {
+    sobre.hidden = true;
+    document.body.classList.remove('configurando');
+    mostraUI();
+  }
+
+  document.getElementById('sobreRepositorio').href = 'https://github.com/' + REPOSITORIO;
+  document.getElementById('btSobre').addEventListener('click', abreSobre);
+  document.getElementById('sobreFechar').addEventListener('click', fechaSobre);
+  // clicar no fundo escuro, fora do cartão, também fecha
+  sobre.addEventListener('pointerdown', e => { if (e.target === sobre) fechaSobre(); });
 
   mostraUI();
   setTimeout(escondeDica, 12000);
