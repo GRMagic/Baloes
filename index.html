@@ -365,6 +365,89 @@
 
   .ui button:hover { background: #fff; }
 
+  .ui #btConfig {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+
+  /* ---------- configurações ---------- */
+
+  #config {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 40, 60, .35);
+    cursor: default;
+  }
+
+  #config[hidden] { display: none; }
+
+  body.configurando #abelha { display: none; }
+
+  #config .cartao {
+    width: min(520px, 92vw);
+    max-height: 88vh;
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 24px 28px;
+    border-radius: 18px;
+    background: #fff;
+    color: #2b4a63;
+    box-shadow: 0 10px 40px rgba(0,0,0,.25);
+  }
+
+  #config h2 { margin: 0 0 18px; font-size: 24px; }
+
+  #config .campo { display: block; margin-bottom: 22px; }
+  #config .campo > span:first-child { display: block; font-weight: bold; margin-bottom: 8px; }
+  #config .linha { display: flex; gap: 8px; align-items: center; }
+  #config small { display: block; margin-top: 6px; font-size: 13px; opacity: .75; }
+  #config .erro { color: #c0392b; opacity: 1; }
+
+  #config input, #config select, #config button {
+    font-family: inherit;
+    font-size: 16px;
+    color: inherit;
+  }
+
+  #config input[type=text], #config select {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 1px solid #b9cddd;
+    border-radius: 8px;
+    cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  #config select { cursor: pointer; }
+  #config input[type=range] { flex: 1; cursor: pointer; }
+  #config output { min-width: 2.5em; text-align: right; font-weight: bold; }
+
+  #config button {
+    padding: 7px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: #e3eef6;
+    cursor: pointer;
+  }
+
+  #config button:hover { background: #d0e3f0; }
+  #config button.principal { display: block; margin-left: auto; background: #2f86c9; color: #fff; }
+  #config button.principal:hover { background: #2774b0; }
+
+  #cfgPalavras { list-style: none; margin: 0 0 8px; padding: 0; }
+  #cfgPalavras li { margin-bottom: 6px; }
+  #cfgPalavras .remover { padding: 7px 11px; }
+
   #dica {
     position: fixed;
     left: 50%;
@@ -427,8 +510,47 @@
 <div id="abelha"><span>🐝</span></div>
 
 <div class="ui" id="ui">
+  <button id="btConfig" type="button" title="Configurações" aria-label="Configurações">
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z"/></svg>
+  </button>
   <button id="btFull" type="button">Tela cheia</button>
   <button id="btSegunda" type="button">2ª janela</button>
+</div>
+
+<div id="config" hidden>
+  <div class="cartao" role="dialog" aria-labelledby="cfgTitulo">
+    <h2 id="cfgTitulo">Configurações</h2>
+
+    <div class="campo">
+      <span>Máximo de balões</span>
+      <span class="linha">
+        <input id="cfgMax" type="range" min="5" max="50" step="1" aria-label="Máximo de balões">
+        <output id="cfgMaxValor" for="cfgMax"></output>
+      </span>
+      <small>Somando as duas telas. Passando disso, o balão mais antigo vai embora.</small>
+    </div>
+
+    <div class="campo">
+      <span>Palavras secretas</span>
+      <ul id="cfgPalavras"></ul>
+      <form id="cfgNova" class="linha">
+        <input id="cfgNovaPalavra" type="text" maxlength="20" placeholder="Nova palavra" autocomplete="off" spellcheck="false">
+        <button type="submit">Adicionar</button>
+      </form>
+      <small id="cfgPalavrasAviso">Só letras e números. Acento não precisa digitar: “Mamãe” vale com M-A-M-A-E.
+        A palavra SAIR é sempre aceita: é ela que fecha o brinquedo.</small>
+    </div>
+
+    <div class="campo">
+      <span>Voz</span>
+      <span class="linha">
+        <select id="cfgVoz" aria-label="Voz"></select>
+        <button id="cfgOuvir" type="button">▶ Ouvir</button>
+      </span>
+    </div>
+
+    <button id="cfgFechar" type="button" class="principal">Pronto</button>
+  </div>
 </div>
 
 <div id="dica">Aperte qualquer letra ou número 🎈</div>
@@ -446,13 +568,14 @@
   const ceuNoite = document.getElementById('ceu-noite');
   const parametros = new URLSearchParams(location.search);
   const ehSegunda = parametros.get('tela') === '2';
+  // aberta pelo app Electron (main.js): já em tela cheia, uma janela por monitor
+  const quiosque = window.quiosque || null;
 
   // as duas telas formam uma sala só: cada uma tem um id, e a principal é a
   // tela 1 (é nela que as palavras secretas sempre se montam)
   const TELA_PRINCIPAL = '1';
   const MEU_ID = ehSegunda ? '2' : '1';
 
-  const MAX_BALOES  = 25;  // total somando as duas telas
   const MAX_CONFETE = 140;
   const EGG_DURACAO = 1.6; // segundos do deslize suave até a posição da palavra secreta
   const CRUZA_DUR   = 0.9; // segundos que um balão leva para atravessar de uma tela para a outra
@@ -618,10 +741,11 @@
   // início, contando as duas telas), os balões se organizam soletrando a
   // palavra na tela principal e a voz a fala
   //
-  // a lista padrão pode ser sobrescrita via querystring, ex.:
+  // a lista é editada na engrenagem; a querystring só troca a lista de
+  // fábrica (a que vale enquanto ninguém mexeu nas configurações), ex.:
   // ?palavras=Ana,Pedro,Maria
   const parametroPalavras = parametros.get('palavras');
-  const PALAVRAS_SECRETAS = parametroPalavras
+  const PALAVRAS_PADRAO = parametroPalavras
     ? parametroPalavras.split(',').map(p => p.trim()).filter(Boolean)
     : ['Arthur', 'Gustavo', 'Daniela', 'Muller', 'MAMAE', 'PAPAI'];
 
@@ -629,27 +753,90 @@
   // antes), mas em vez de soletrar, estoura tudo e fecha as duas telas
   const PALAVRA_SAIR = 'SAIR';
 
-  const TODAS_PALAVRAS = PALAVRAS_SECRETAS.map(p => p.toUpperCase()).concat(PALAVRA_SAIR);
+  // o que se digita para formar a palavra: o teclado do brinquedo só aceita
+  // A-Z, 0-9 e Ç, então "Mamãe" se digita MAMAE (e a voz fala "Mamãe")
+  function teclasDaPalavra(p) {
+    return p.toUpperCase().normalize('NFD')
+      .replace(/Ç/g, 'Ç') // o Ç é a única acentuada que o teclado aceita
+      .replace(/[̀-ͯ]/g, '');
+  }
+
+  // motivo para recusar a palavra na lista, ou null se ela serve
+  function problemaNaPalavra(p, lista, ignorar) {
+    const teclas = teclasDaPalavra(p);
+    if (teclas.length < 2) return 'A palavra precisa de pelo menos 2 letras.';
+    if (!/^[A-Z0-9Ç]+$/.test(teclas)) return 'Use só letras e números, sem espaço nem símbolo.';
+    if (teclas === PALAVRA_SAIR) return 'SAIR já é a palavra que fecha o brinquedo.';
+    if (lista.some((q, i) => i !== ignorar && teclasDaPalavra(q) === teclas)) return 'Essa palavra já está na lista.';
+    return null;
+  }
+
+  // ------------------------------------------------------- configurações
+  // Ficam no localStorage, que as duas telas dividem: o que muda numa vale na
+  // outra na hora (evento 'storage') e continua valendo ao reabrir.
+
+  const CHAVE_CONFIG = 'baloes:config';
+  const MAX_PADRAO = 25;
+  const MAX_MIN = 5, MAX_MAX = 50; // os mesmos do controle deslizante
+
+  function leConfig() {
+    let salva = null;
+    try { salva = JSON.parse(localStorage.getItem(CHAVE_CONFIG)); } catch (err) { /* sem storage: fábrica */ }
+    if (!salva || typeof salva !== 'object') salva = {};
+    const max = Number(salva.maxBaloes);
+    return {
+      maxBaloes: Number.isInteger(max) ? clamp(max, MAX_MIN, MAX_MAX) : MAX_PADRAO,
+      palavras: Array.isArray(salva.palavras)
+        ? salva.palavras.filter(p => typeof p === 'string' && !problemaNaPalavra(p, [], -1))
+        : PALAVRAS_PADRAO.slice(),
+      voz: typeof salva.voz === 'string' ? salva.voz : '' // '' = automática
+    };
+  }
+
+  let config = leConfig();
+  let TODAS_PALAVRAS = [];
+
+  function aplicaConfig() {
+    TODAS_PALAVRAS = config.palavras.map(teclasDaPalavra).concat(PALAVRA_SAIR);
+    carregaVozes();
+  }
+
+  function salvaConfig() {
+    try { localStorage.setItem(CHAVE_CONFIG, JSON.stringify(config)); } catch (err) { /* vale só até fechar */ }
+    aplicaConfig();
+  }
+
+  addEventListener('storage', e => {
+    if (e.key !== CHAVE_CONFIG) return;
+    config = leConfig();
+    aplicaConfig();
+  });
 
   let voz = null;
+
+  // as vozes "Online (Natural)" do Edge aparecem na lista mas ficam mudas ao
+  // chamar speak() em vários setups — não priorizamos essas. A voz do Google
+  // no Chrome é confiável e soa melhor que a voz local padrão do Windows (no
+  // app Electron ela não existe: lá só aparecem as vozes do Windows).
+  function vozAutomatica(vs) {
+    const pt = v => /^pt/i.test(v.lang);
+    const brasileira = v => /pt[-_]BR/i.test(v.lang);
+    return vs.find(v => brasileira(v) && /google/i.test(v.name))
+        || vs.find(v => pt(v) && /google/i.test(v.name))
+        || vs.find(brasileira)
+        || vs.find(pt)
+        || null;
+  }
+
   function carregaVozes() {
     if (!('speechSynthesis' in window)) return;
     const vs = speechSynthesis.getVoices();
-    const pt = v => /^pt/i.test(v.lang);
-    const brasileira = v => /pt[-_]BR/i.test(v.lang);
-    // as vozes "Online (Natural)" do Edge aparecem na lista mas ficam mudas ao
-    // chamar speak() em vários setups — não priorizamos essas. A voz do Google
-    // no Chrome é confiável e soa melhor que a voz local padrão do Windows.
-    voz = vs.find(v => brasileira(v) && /google/i.test(v.name))
-       || vs.find(v => pt(v) && /google/i.test(v.name))
-       || vs.find(brasileira)
-       || vs.find(pt)
-       || null;
+    // a escolhida na engrenagem; se foi desinstalada, volta para a automática
+    voz = (config.voz && vs.find(v => v.voiceURI === config.voz)) || vozAutomatica(vs);
   }
-  if ('speechSynthesis' in window) {
-    carregaVozes();
-    speechSynthesis.onvoiceschanged = carregaVozes;
-  }
+
+  aplicaConfig();
+  if ('speechSynthesis' in window) speechSynthesis.addEventListener('voiceschanged', carregaVozes);
 
   function fala(texto) {
     if (!('speechSynthesis' in window)) return;
@@ -796,8 +983,12 @@
 
   // solta o balão mais antigo das DUAS telas quando o limite compartilhado
   // estoura — a idade é comparada por b.nasc, que é o mesmo relógio nas duas
+  //
+  // Durante uma palavra secreta o limite não vale: ela só começa com as telas
+  // vazias, então todo balão na tela é dela, e soltar o mais velho desmancharia
+  // a palavra (o que acontecia com uma palavra maior que o limite).
   function garanteEspaco() {
-    if (todosOsBaloes() < MAX_BALOES) return;
+    if (sequencia.length || todosOsBaloes() < config.maxBaloes) return;
 
     const maisVelho = (lista) =>
       lista.reduce((a, b) => (!a || b.nasc < a.nasc ? b : a), null);
@@ -941,7 +1132,7 @@
       return;
     }
 
-    const palavra = PALAVRAS_SECRETAS.find(p => p.toUpperCase() === atual);
+    const palavra = config.palavras.find(p => teclasDaPalavra(p) === atual);
     if (!palavra) return;
 
     const letras = sequencia.map(s => ({ id: s.id, ch: s.ch, tela: s.tela }));
@@ -1164,23 +1355,15 @@
   let arrastoInicioTop = 0;
 
   // ------------------------------------------------------- as duas telas como uma sala só
-  // Janelas do MESMO perfil do Chrome (ex.: botão "2ª janela") conversam por
-  // BroadcastChannel, que elas compartilham. As janelas do modo quiosque (.bat)
-  // usam perfis separados de propósito (senão o posicionamento nos monitores
-  // quebra), então essas conversam por um servidorzinho local (sync-server.ps1,
-  // subido pelo próprio .bat) — se ele não estiver rodando (modo normal, sem o
-  // .bat), as tentativas de fetch simplesmente falham silenciosamente.
-  //
-  // Os dois caminhos carregam o MESMO evento, então o mesmo evento pode chegar
-  // duas vezes: por isso cada um tem id e a gente ignora repetido.
+  // As duas janelas conversam por BroadcastChannel e dividem o mesmo
+  // localStorage: tanto as do app Electron (mesma sessão) quanto as do Chrome
+  // aberto à mão com o botão "2ª janela" (mesmo perfil).
   //
   // A segunda tela é opcional: sem ninguém do outro lado, nada disso muda o
   // comportamento — a tela se vira sozinha exatamente como antes.
 
   const CHAVE_PERIODO = 'baloes:periodo';
   const CHAVE_FASE = 'baloes:fase';
-  const SYNC_URL = 'http://127.0.0.1:8935';
-  const SYNC_INTERVALO = 150;        // era 1 s — lento demais para balão
   const INVENTARIO_INTERVALO = 200;  // no máximo 5 avisos por segundo
   const BATIDA_INTERVALO = 1000;     // mesmo parada, a tela avisa que está viva
   const SUMIU_DEPOIS = 3000;         // sem notícia por esse tempo, a outra tela não existe
@@ -1200,25 +1383,13 @@
   let canalSync = null;
   try { canalSync = new BroadcastChannel('baloes-sala'); } catch (err) { canalSync = null; }
 
-  let nEvento = 0;
-  let cursor = null;          // último número de evento lido do servidor
-  const vistos = new Set();   // ids já processados
-
   function enviaEvento(tipo, dados) {
-    const ev = { id: MEU_ID + '#' + (++nEvento), de: MEU_ID, tipo, dados: dados || {} };
+    const ev = { de: MEU_ID, tipo, dados: dados || {} };
     if (canalSync) { try { canalSync.postMessage(ev); } catch (err) { /* ignora */ } }
-    fetch(SYNC_URL + '/eventos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(ev)
-    }).catch(() => { /* sem servidor de sincronização (fora do modo quiosque) — tudo bem */ });
   }
 
   function aoReceber(ev) {
     if (!ev || !ev.tipo || ev.de === MEU_ID) return;
-    if (vistos.has(ev.id)) return;
-    if (vistos.size > 400) vistos.clear();
-    vistos.add(ev.id);
 
     espelho.visto = Date.now(); // qualquer evento já prova que a outra tela está viva
     const d = ev.dados || {};
@@ -1351,29 +1522,6 @@
     } catch (err) { /* localStorage indisponível — sem sincronização, sem problema */ }
   }
 
-  function consultaSync() {
-    // A primeira consulta leva junto o período em que esta tela abriu. Se o
-    // servidor acabou de subir, ele ainda não sabe o da sala, e passa a valer
-    // este — antes ele respondia um 'dia' de fábrica, e a tela que abria de
-    // noite trocava a lua pelo sol na frente da criança.
-    const url = SYNC_URL + '/eventos' + (cursor == null
-      ? '?periodo=' + periodo + '&fase=' + faseIndex
-      : '?desde=' + cursor);
-    fetch(url).then(r => r.ok ? r.json() : null).then(dados => {
-      if (!dados) return;
-      const primeira = cursor == null;
-      cursor = dados.seq;
-      if (primeira) {
-        // janela aberta depois da outra: adota o período que já estava valendo
-        if (dados.periodo === 'dia' || dados.periodo === 'noite') {
-          adotaPeriodoDaSala(dados.periodo, dados.faseIndex);
-        }
-        return;
-      }
-      if (Array.isArray(dados.eventos)) for (const ev of dados.eventos) aoReceber(ev);
-    }).catch(() => { /* sem servidor de sincronização (fora do modo quiosque) — tudo bem */ });
-  }
-
   function receberSync(novoPeriodo, faseRemota) {
     if (transicionando || novoPeriodo === periodo) return;
     comitarTransicao(novoPeriodo, { origem: 'sync', faseRemota });
@@ -1394,23 +1542,6 @@
   }
 
   function faseValida(f) { return Number.isInteger(f) && f >= 0 && f < FASES.length; }
-
-  // A sala já tinha período quando esta tela chegou (a outra tela está aberta,
-  // ou fechou há pouco). Se for diferente do que esta abriu, ela passa a ele
-  // na hora, sem a virada de 3 s: para quem acabou de abrir a página, isso não
-  // é a noite chegando — é o estado em que a sala está.
-  function adotaPeriodoDaSala(novoPeriodo, faseRemota) {
-    // a criança já mexeu no sol/lua: o que ela fez vale (e já foi publicado)
-    if (transicionando || arrastoAlvo) return;
-    const fase = faseValida(faseRemota) ? faseRemota : Math.max(faseIndex, 0);
-    if (novoPeriodo === periodo && (periodo === 'dia' || fase === faseIndex)) return;
-
-    document.body.classList.add('sem-transicao');
-    assentaPeriodo(novoPeriodo, fase);
-    void document.body.offsetWidth; // fixa o estado novo com as transições ainda desligadas
-    document.body.classList.remove('sem-transicao');
-    persistirEstado();
-  }
 
   if (canalSync) {
     canalSync.onmessage = e => aoReceber(e.data);
@@ -1434,11 +1565,6 @@
 
     assentaPeriodo('noite', faseValida(faseSalva) ? faseSalva : 0);
   })();
-
-  // só depois do estado salvo: a primeira consulta conta ao servidor em que
-  // período esta tela abriu
-  setInterval(consultaSync, SYNC_INTERVALO);
-  consultaSync();
 
   // Até aqui o cenário inteiro estava com as transições desligadas (classe no
   // <body>), então abrir a página já de noite mostra a noite pronta no primeiro
@@ -1524,10 +1650,6 @@
 
     periodo = novoPeriodo;
 
-    // Guarda também a virada que veio da outra tela: no quiosque cada tela tem
-    // seu próprio perfil (e seu próprio localStorage), e só a tela onde a
-    // criança arrastou guardava. A outra reabria no período velho e, ao achar
-    // a sala no novo, trocava o sol pela lua.
     persistirEstado();
     if (origem === 'local') enviaEvento('periodo', { periodo, faseIndex });
 
@@ -1644,6 +1766,12 @@
   // nenhuma página web consegue impedi-los, então nem tentamos (e Esc sempre
   // deve continuar funcionando, é a saída de emergência do adulto).
   addEventListener('keydown', e => {
+    // com as configurações abertas o teclado é do adulto, para digitar nos campos
+    if (configAberta()) {
+      if (e.key === 'Escape') fechaConfig();
+      return;
+    }
+
     if (e.key === 'Escape') {
       if (!e.repeat) limpaTudo(true);
       return;
@@ -1702,6 +1830,7 @@
   });
 
   addEventListener('pointermove', e => {
+    if (configAberta()) return; // abelha escondida e sem zumbido
     moveArrasto(e);
 
     abelha.classList.add('visivel');
@@ -1725,10 +1854,10 @@
   }, { passive: true });
 
   addEventListener('pointerdown', e => {
-    if (e.target.closest('.ui')) return;
+    if (e.target.closest('.ui, #config')) return;
     audio();
     escondeDica();
-    if (ehSegunda) telaCheia();
+    if (ehSegunda && !quiosque) telaCheia();
 
     const x = e.clientX, y = e.clientY;
     let alvo = null;
@@ -1791,6 +1920,148 @@
     if (janelaSegunda) janelaSegunda.focus();
   });
 
+  // ------------------------------------------------------- engrenagem (configurações)
+
+  const painel        = document.getElementById('config');
+  const cfgMax        = document.getElementById('cfgMax');
+  const cfgMaxValor   = document.getElementById('cfgMaxValor');
+  const cfgPalavras   = document.getElementById('cfgPalavras');
+  const cfgNova       = document.getElementById('cfgNova');
+  const cfgNovaPalavra = document.getElementById('cfgNovaPalavra');
+  const cfgAviso      = document.getElementById('cfgPalavrasAviso');
+  const cfgVoz        = document.getElementById('cfgVoz');
+  const AVISO_PALAVRAS = cfgAviso.innerHTML;
+  const FRASE_TESTE   = 'Olá! Vamos brincar?';
+
+  cfgMax.min = MAX_MIN;
+  cfgMax.max = MAX_MAX;
+
+  function configAberta() { return !painel.hidden; }
+
+  function abreConfig() {
+    preencheConfig();
+    painel.hidden = false;
+    document.body.classList.add('configurando');
+    silenciaZumbido(true);
+    ui.classList.add('oculto');
+  }
+
+  function fechaConfig() {
+    // tira o foco antes de esconder: a palavra que estava sendo editada
+    // dispara o 'change' e fica salva
+    if (painel.contains(document.activeElement)) document.activeElement.blur();
+    painel.hidden = true;
+    document.body.classList.remove('configurando');
+    mostraUI();
+  }
+
+  function preencheConfig() {
+    cfgMax.value = config.maxBaloes;
+    cfgMaxValor.textContent = config.maxBaloes;
+    preenchePalavras();
+    preencheVozes();
+    avisaPalavras(null);
+  }
+
+  function avisaPalavras(erro) {
+    cfgAviso.classList.toggle('erro', !!erro);
+    if (erro) cfgAviso.textContent = erro;
+    else cfgAviso.innerHTML = AVISO_PALAVRAS;
+  }
+
+  function preenchePalavras() {
+    cfgPalavras.replaceChildren(...config.palavras.map((p, i) => {
+      const li = document.createElement('li');
+      li.className = 'linha';
+
+      const campo = document.createElement('input');
+      campo.type = 'text';
+      campo.value = p;
+      campo.maxLength = 20;
+      campo.spellcheck = false;
+      campo.setAttribute('aria-label', 'Palavra ' + (i + 1));
+      campo.addEventListener('change', () => {
+        const nova = campo.value.trim();
+        const erro = problemaNaPalavra(nova, config.palavras, i);
+        if (erro) {
+          avisaPalavras(nova ? erro : 'Para tirar uma palavra da lista, use o ✕.');
+          campo.value = config.palavras[i];
+          return;
+        }
+        config.palavras[i] = nova;
+        campo.value = nova;
+        salvaConfig();
+        avisaPalavras(null);
+      });
+
+      const remover = document.createElement('button');
+      remover.type = 'button';
+      remover.className = 'remover';
+      remover.textContent = '✕';
+      remover.title = 'Remover';
+      remover.setAttribute('aria-label', 'Remover ' + p);
+      remover.addEventListener('click', () => {
+        config.palavras.splice(i, 1);
+        salvaConfig();
+        preenchePalavras();
+        avisaPalavras(null);
+      });
+
+      li.append(campo, remover);
+      return li;
+    }));
+  }
+
+  function preencheVozes() {
+    if (!('speechSynthesis' in window)) { cfgVoz.disabled = true; return; }
+    const vs = speechSynthesis.getVoices();
+    const auto = vozAutomatica(vs);
+    const ehPt = v => /^pt/i.test(v.lang) ? 1 : 0;
+    // português primeiro: é a língua do brinquedo
+    const ordem = [...vs].sort((a, b) => (ehPt(b) - ehPt(a)) || a.name.localeCompare(b.name));
+    cfgVoz.replaceChildren(
+      new Option('Automática' + (auto ? ' (' + auto.name + ')' : ''), ''),
+      ...ordem.map(v => new Option(v.name + ' — ' + v.lang, v.voiceURI))
+    );
+    cfgVoz.value = vs.some(v => v.voiceURI === config.voz) ? config.voz : '';
+  }
+
+  cfgMax.addEventListener('input', () => {
+    config.maxBaloes = Number(cfgMax.value);
+    cfgMaxValor.textContent = cfgMax.value;
+    salvaConfig();
+  });
+
+  cfgNova.addEventListener('submit', e => {
+    e.preventDefault();
+    const nova = cfgNovaPalavra.value.trim();
+    if (!nova) return;
+    const erro = problemaNaPalavra(nova, config.palavras, -1);
+    if (erro) { avisaPalavras(erro); return; }
+    config.palavras.push(nova);
+    salvaConfig();
+    preenchePalavras();
+    cfgNovaPalavra.value = '';
+    avisaPalavras(null);
+  });
+
+  cfgVoz.addEventListener('change', () => {
+    config.voz = cfgVoz.value;
+    salvaConfig();
+    fala(FRASE_TESTE);
+  });
+
+  document.getElementById('cfgOuvir').addEventListener('click', () => fala(FRASE_TESTE));
+  document.getElementById('btConfig').addEventListener('click', abreConfig);
+  document.getElementById('cfgFechar').addEventListener('click', fechaConfig);
+  // clicar no fundo escuro, fora do cartão, também fecha
+  painel.addEventListener('pointerdown', e => { if (e.target === painel) fechaConfig(); });
+
+  // as vozes chegam aos poucos logo que a página abre
+  if ('speechSynthesis' in window) {
+    speechSynthesis.addEventListener('voiceschanged', () => { if (configAberta()) preencheVozes(); });
+  }
+
   // ------------------------------------------------------------------ sair
 
   let janelaSegunda = null;
@@ -1810,37 +2081,18 @@
   }
 
   function fechaJanela() {
+    // no app Electron, quem fecha é ele: todas as telas de uma vez
+    if (quiosque) { quiosque.sair(); return; }
+
     // a janela aberta pelo botão "2ª janela" é filha desta, e essa fecha mesmo
     try {
       if (janelaSegunda && !janelaSegunda.closed) janelaSegunda.close();
     } catch (err) { /* ignora */ }
 
-    // no modo quiosque o Chrome ignora window.close() (a janela não foi aberta
-    // por script), então quem fecha de verdade é o servidorzinho local
-    pedeParaOServidorFechar();
     try { window.close(); } catch (err) { /* ignora */ }
 
     // se ainda estamos aqui, o navegador não deixou fechar: despedida
     setTimeout(mostraDespedida, 1200);
-  }
-
-  // Tem que ser sendBeacon, não fetch: o window.close() logo abaixo mata a
-  // página, e com ela um fetch que ainda não tinha saído — o pedido se perdia e
-  // o quiosque ficava aberto. O beacon o navegador entrega mesmo com a página
-  // já indo embora.
-  function pedeParaOServidorFechar() {
-    const url = SYNC_URL + '/sair';
-    let enviado = false;
-    try {
-      enviado = typeof navigator !== 'undefined' && navigator.sendBeacon
-        ? navigator.sendBeacon(url, '')
-        : false;
-    } catch (err) { enviado = false; }
-    if (!enviado) {
-      try {
-        fetch(url, { method: 'POST', keepalive: true }).catch(() => { /* sem servidor */ });
-      } catch (err) { /* sem servidor — segue para a despedida */ }
-    }
   }
 
   function mostraDespedida() {
@@ -1851,11 +2103,17 @@
     document.body.appendChild(el);
   }
 
+  // no app as janelas já abrem em tela cheia, uma em cada monitor: dos
+  // controles só sobra a engrenagem
+  if (quiosque) {
+    document.getElementById('btFull').remove();
+    document.getElementById('btSegunda').remove();
+  }
   if (ehSegunda) {
     ui.remove();
     sol.remove();
     lua.remove();
-    dica.textContent = 'Continuação da outra tela — clique para tela cheia 🎈';
+    if (!quiosque) dica.textContent = 'Continuação da outra tela — clique para tela cheia 🎈';
   }
 
   mostraUI();

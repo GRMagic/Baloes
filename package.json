@@ -1,0 +1,14 @@
+{
+  "name": "baloes",
+  "productName": "Balões de Letras",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Brinquedo de balões de letras em modo quiosque, em todos os monitores",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^45.1.0"
+  }
+}

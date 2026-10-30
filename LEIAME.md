@@ -1,19 +1,21 @@
 # Balões de Letras 🎈
 
-Brinquedo simples para criançada apertar tecla e mexer o mouse. Testado e pensado para
-**Google Chrome**.
+Brinquedo simples para criançada apertar tecla e mexer o mouse. Roda como um app (Electron)
+em modo quiosque, ocupando todos os monitores — ou direto no **Google Chrome**.
 
 ## Como abrir
 
 Duas formas:
 
+- **Duplo clique em `Abrir Balões.bat`** — abre o app em "modo quiosque": tela cheia, sem
+  nenhuma barra, uma janela em cada monitor, com o máximo de travamento de teclas. Veja a
+  seção "Modo quiosque" abaixo.
 - **Duplo clique em `index.html`** — abre no Chrome (se for o navegador padrão), do jeito
   normal.
-- **Um dos arquivos `.bat`** — abre em "modo quiosque": tela cheia sem nenhuma barra do
-  Chrome, com o máximo de travamento de teclas que dá pra conseguir. Veja a seção "Modo
-  quiosque" abaixo.
 
-Não precisa de internet nem de instalar nada em nenhum dos dois casos.
+Na **primeira vez**, o `.bat` instala o Electron sozinho: precisa do [Node.js](https://nodejs.org)
+instalado e de internet (são uns 100 MB, só uma vez). Depois disso não precisa de internet
+nenhuma. Para rodar pelo terminal: `npm install` e `npm start`.
 
 ## Como usar
 
@@ -26,6 +28,27 @@ Não precisa de internet nem de instalar nada em nenhum dos dois casos.
 - O mouse vira uma abelhinha 🐝 com rastro de brilhos, e zune enquanto se move (some e
   silencia quando o mouse sai da janela).
 
+## Configurações (engrenagem)
+
+Ao abrir, aparece por alguns segundos uma **engrenagem** no canto de cima, à direita da tela
+principal. Ela some sozinha e volta sempre que o mouse chega perto do topo da tela. Clicando
+nela, abre o painel de configurações:
+
+- **Máximo de balões** — de 5 a 50 (25 de fábrica), somando as duas telas. Passando disso, o
+  balão mais antigo vai embora. Durante uma palavra secreta o limite não vale, senão uma
+  palavra maior que ele nunca se formaria.
+- **Palavras secretas** — edite direto no campo, tire com o **✕** e acrescente com
+  **Adicionar** (ou Enter). Só letras e números. Acento não precisa ser digitado: "Mamãe"
+  vale digitando M-A-M-A-E, e a voz fala "Mamãe" certinho. A palavra **SAIR** não entra na
+  lista: ela é sempre aceita, porque é a que fecha o brinquedo.
+- **Voz** — todas as vozes instaladas, as de português primeiro. "Automática" escolhe a
+  melhor de português sozinha. Trocar de voz já fala uma frase de teste, e o **▶ Ouvir**
+  repete.
+
+Tudo vale na hora para as duas telas e fica guardado para a próxima vez. Com o painel aberto,
+o teclado é do adulto (as teclas não fazem balão); **Pronto**, **Esc** ou um clique fora do
+painel fecham.
+
 ## Com as duas telas abertas
 
 As duas telas viram **uma sala só**, como se a segunda fosse a continuação da primeira:
@@ -33,58 +56,52 @@ As duas telas viram **uma sala só**, como se a segunda fosse a continuação da
 - Os balões **sobem em tela sorteada e em posição sorteada**: com as duas abertas, a letra
   pode aparecer em qualquer canto de qualquer um dos dois monitores. Não importa qual das
   duas janelas está em foco — o teclado é o mesmo para as duas.
-- O **limite de balões é compartilhado**: são 25 no total somando as duas telas, não 25 em cada.
-  Passando disso, o balão mais antigo das duas sobe e vai embora.
+- O **limite de balões é compartilhado**: o máximo das configurações é o total somando as
+  duas telas, não o de cada uma. Passando disso, o balão mais antigo das duas sobe e vai
+  embora.
 - **Esc limpa as duas telas** de uma vez.
 - A **voz sai sempre de uma tela só** — a que recebeu a tecla. O barulho de estouro
   acontece nas duas (cada balão estoura onde está), mas as frases — a letra, os elogios
   ("Boa!", "Legal!") e o "Tchau!" — nunca são faladas em dobro, senão uma voz atropela a outra.
 - Estourar repetindo a letra funciona mesmo que o balão esteja na outra tela.
-- As **palavras reservadas não dependem de tela**: dá para começar a digitar numa janela e
+- As **palavras secretas não dependem de tela**: dá para começar a digitar numa janela e
   terminar na outra (inclusive o `sair`). A palavra se monta sempre na tela principal — as
   letras que subiram na segunda atravessam para ela.
 
-A segunda tela é sempre opcional: com só uma aberta, tudo acontece nela normalmente, do mesmo
-jeito de sempre. Dá para abrir ou fechar a segunda no meio do uso, sem quebrar nada.
+A segunda tela é sempre opcional: com um monitor só, o app abre só a principal e tudo
+acontece nela, do mesmo jeito de sempre. Com mais de dois monitores, o app usa o principal e
+mais um (a sala é de no máximo duas telas).
 
-## Teclas travadas
+## Modo quiosque (o app)
 
-A página bloqueia o máximo que dá para bloquear via JavaScript: Ctrl+A, Backspace voltando
-página, Tab mudando foco, F5, etc. Isso vale tanto no modo normal quanto no quiosque.
+O `Abrir Balões.bat` abre uma janela em cada monitor, já em tela cheia: o **monitor principal
+do Windows** é a tela 1 (a do sol e da lua, onde as palavras se montam) e o outro é a
+continuação dela. Não tem botão de tela cheia nem de segunda janela: elas já abrem assim.
 
-O que **não dá pra bloquear de jeito nenhum** — reservado pelo próprio Chrome/Windows, e o
-comportamento muda dependendo do modo:
+O que fica travado no app:
 
-- **Esc** — no modo normal (duplo clique + F11), sempre sai da tela cheia — é a saída de
-  emergência do adulto, por isso deixamos ela livre de propósito. **No modo quiosque (`.bat`),
-  Esc não faz nada** — isso é esperado: o quiosque não usa o mesmo mecanismo de "tela cheia"
-  da página, então não existe estado nenhum para o Esc sair.
-- **Ctrl+W** e **Ctrl+F4** (fechar aba) — reservados pelo Chrome, nenhuma página consegue
-  bloquear nem liberar isso. **No modo quiosque o Chrome mesmo ignora esses atalhos** — não é
-  bug, é o próprio modo quiosque protegendo contra fechamento acidental.
-- **Alt+F4** — normalmente é o Windows quem fecha a janela, independente do que a página faz.
-  **Testado e confirmado: no modo quiosque do Chrome, Alt+F4 também não fecha** — provavelmente
-  porque a janela do quiosque não tem a moldura padrão do Windows, então não há para onde
-  mandar o "fechar". No modo normal (sem `.bat`), Alt+F4 funciona normalmente.
-- **Alt+Tab** e a **tecla Windows** — são do próprio Windows, o navegador nem chega a ver.
-- **F11**, **F12** — reservados pelo navegador (no quiosque, F11 não faz nada por não ter
-  janela "normal" para voltar).
+- **Alt+F4** não fecha. **Ctrl+W**, **Ctrl+R**, **F5**, **F11**, **F12** e
+  **Ctrl+Shift+I** não fazem nada.
+- **Esc** só limpa os balões — não tem "tela cheia" para sair.
+- Arrastar um arquivo para dentro da janela não abre nada.
 
-No modo normal (não quiosque), como reforço extra: enquanto a página está em tela cheia,
-fechar a aba/janela ou recarregar faz o Chrome mostrar uma confirmação nativa ("Sair do
-site?") antes de sair — a criança dificilmente clica nisso sozinha. Esse reforço **não se
-aplica ao modo quiosque** (ele já bloqueia Ctrl+W/Ctrl+F4 por conta própria, então a
-confirmação nem chega a ser necessária).
+O que **não dá pra travar**, por ser do próprio Windows: **Alt+Tab**, a **tecla Windows** e
+**Ctrl+Alt+Del**.
 
-## Modo quiosque (bloqueio máximo)
+## Teclas travadas no Chrome
 
-- **`Abrir Modo Quiosque (1 tela).bat`** — abre em tela cheia sem barra de endereço, sem
-  abas.
-- **`Abrir Modo Quiosque (2 telas).bat`** — abre uma janela em cada monitor, já posicionadas
-  certas para os seus dois monitores lado a lado.
+Aberta direto no Chrome (`index.html`), a página bloqueia o máximo que dá para bloquear via
+JavaScript: Ctrl+A, Backspace voltando página, Tab mudando foco, F5, etc. O que é reservado
+pelo próprio Chrome/Windows continua funcionando:
 
-Usam um perfil de navegador separado e temporário, então não mexem nos seus favoritos,
-senhas ou abas normais do Chrome.
+- **Esc** sempre sai da tela cheia — é a saída de emergência do adulto, por isso deixamos ela
+  livre de propósito.
+- **Ctrl+W**, **Ctrl+F4** e **Alt+F4** fecham a aba/janela normalmente.
+- **Alt+Tab**, **tecla Windows**, **F11** e **F12** também são do Windows/Chrome.
+
+Como reforço: enquanto a página está em tela cheia, fechar a aba/janela ou recarregar faz o
+Chrome mostrar uma confirmação nativa ("Sair do site?") antes de sair — a criança
+dificilmente clica nisso sozinha.
 
 ## Sair
 
@@ -96,36 +113,37 @@ nenhum balão. É o que impede a criança de fechar o brinquedo sem querer baten
 
 Outras formas, se precisar:
 
-- **Modo normal** (duplo clique no `index.html`): **Esc** sai da tela cheia, depois
-  **Alt+F4** ou o X fecha normalmente.
-- **Modo quiosque** (`.bat`): nem Esc nem Alt+F4 fazem nada — testado e confirmado. Se o
-  `sair` não funcionar (por exemplo, se o servidorzinho que fecha as janelas não tiver subido),
-  a forma garantida é **Ctrl+Shift+Esc**, que abre o Gerenciador de Tarefas do Windows por
-  cima do quiosque (esse atalho é do Windows, não do navegador, então sempre funciona).
-  Encontre **Google Chrome** na lista, clique nele e em **Finalizar tarefa**.
+- **App**: se o `sair` não funcionar, **Ctrl+Shift+Esc** abre o Gerenciador de Tarefas do
+  Windows por cima do quiosque (esse atalho é do Windows, então sempre funciona). Encontre
+  **Electron** na lista, clique nele e em **Finalizar tarefa**.
+- **Chrome** (`index.html`): **Esc** sai da tela cheia, depois **Alt+F4** ou o X fecha
+  normalmente.
 
-## Usar nos dois monitores sem o `.bat`
+## Usar nos dois monitores no Chrome
 
-No modo normal (duplo clique no `index.html`), clique em **"2ª janela"**. Ela tenta abrir
-automaticamente no outro monitor; se o Chrome pedir permissão para "gerenciar janelas em
-todas as telas", aceite para isso funcionar sozinho. Se não conseguir sozinho, abre uma
-janela normal — é só arrastar para o outro monitor e apertar F11 nela.
+Aberta direto no Chrome, clique em **"2ª janela"** (os botões aparecem junto da engrenagem,
+quando o mouse chega no topo). Ela tenta abrir automaticamente no outro monitor; se o Chrome
+pedir permissão para "gerenciar janelas em todas as telas", aceite para isso funcionar
+sozinho. Se não conseguir sozinho, abre uma janela normal — é só arrastar para o outro
+monitor e apertar F11 nela.
 
-As duas janelas funcionam como uma sala só, igual ao modo quiosque de 2 telas (veja "Com as
-duas telas abertas" acima). Só o teclado é que continua indo para a janela em foco (a última
-clicada) — mas tanto faz qual delas seja: o balão sai numa das duas telas por sorteio, não
-depende de qual janela recebeu a tecla.
+As duas janelas funcionam como uma sala só, igual ao app (veja "Com as duas telas abertas"
+acima).
 
 ## Voz
 
-A página usa a voz do Google no Chrome, que soa bem mais natural que a voz padrão do
-Windows. Falar só a letra pura (sem soletração tipo "éfe", "ésse", sem pontuação extra) foi
-o que soou melhor nos testes — por isso o nome de várias letras no código é a própria letra.
-A exceção é o Ç, que é falado como "cê cedilha": é o nome dele mesmo, e o caractere sozinho
-nem sempre é lido pela voz.
+Falar só a letra pura (sem soletração tipo "éfe", "ésse", sem pontuação extra) foi o que soou
+melhor nos testes — por isso o nome de várias letras no código é a própria letra. A exceção é
+o Ç, que é falado como "cê cedilha": é o nome dele mesmo, e o caractere sozinho nem sempre é
+lido pela voz.
+
+- **No app**, as vozes são as do Windows (em português, normalmente **Microsoft Daniel** e
+  **Microsoft Maria**). Escolha a preferida na engrenagem.
+- **No Chrome**, aparece também a voz do Google, que soa mais natural — a "Automática" escolhe
+  ela. Ela é online: sem internet, fica muda.
 
 ## Se a voz não falar
 
 Verifique se o Windows tem uma voz em português instalada (Configurações → Hora e Idioma →
-Fala) e se o volume do Chrome não está mudo. Sem voz, tudo o resto (balão, som de estouro,
-zumbido da abelha) continua funcionando normalmente.
+Fala) e se o volume não está mudo. Sem voz, tudo o resto (balão, som de estouro, zumbido da
+abelha) continua funcionando normalmente.
