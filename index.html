@@ -233,6 +233,13 @@
     text-shadow: 0 3px 0 rgba(0,0,0,.22), 0 0 14px rgba(0,0,0,.18);
   }
 
+  /* o acento chegando, quando a palavra secreta se forma */
+  .balao .letra.com-acento { animation: ganha-acento .6s ease-out; }
+
+  @keyframes ganha-acento {
+    40% { transform: scale(1.25); }
+  }
+
   .balao .fio {
     position: absolute;
     left: 50%;
@@ -351,6 +358,26 @@
     pointer-events: none;
   }
 
+  /* marca d'água com a saída, enquanto os controles estão escondidos — do
+     lado esquerdo, longe do sol */
+  #marca {
+    position: fixed;
+    top: 10px;
+    left: 12px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    z-index: 100;
+    color: #fff;
+    font-size: 15px;
+    text-shadow: 0 1px 3px rgba(0,0,0,.35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .5s ease;
+  }
+
+  .ui.oculto + #marca { opacity: .6; }
+
   .ui button {
     font-family: inherit;
     font-size: 13px;
@@ -409,6 +436,7 @@
   #config .campo > span:first-child { display: block; font-weight: bold; margin-bottom: 8px; }
   #config .linha { display: flex; gap: 8px; align-items: center; }
   #config small { display: block; margin-top: 6px; font-size: 13px; opacity: .75; }
+  #config small[hidden] { display: none; }
   #config .erro { color: #c0392b; opacity: 1; }
 
   #config input, #config select, #config button {
@@ -498,9 +526,9 @@
   <div id="sol"></div>
   <div id="lua"><div class="sombra"></div></div>
   <div class="nuvem" style="width:200px;height:60px;top:12vh;animation-duration:70s"></div>
-  <div class="nuvem" style="width:140px;height:44px;top:28vh;animation-duration:95s;animation-delay:-30s"></div>
-  <div class="nuvem" style="width:260px;height:74px;top:6vh;animation-duration:120s;animation-delay:-70s;opacity:.75"></div>
-  <div class="nuvem" style="width:170px;height:52px;top:42vh;animation-duration:85s;animation-delay:-55s;opacity:.7"></div>
+  <div class="nuvem" style="width:140px;height:44px;top:28vh;animation-duration:95s"></div>
+  <div class="nuvem" style="width:260px;height:74px;top:6vh;animation-duration:120s;opacity:.75"></div>
+  <div class="nuvem" style="width:170px;height:52px;top:42vh;animation-duration:85s;opacity:.7"></div>
   <div id="morro2"></div>
   <div id="morro"></div>
 </div>
@@ -516,6 +544,7 @@
   <button id="btFull" type="button">Tela cheia</button>
   <button id="btSegunda" type="button">2ª janela</button>
 </div>
+<div id="marca">Para fechar, estoure todos os balões (Esc) e escreva&nbsp;<b>SAIR</b></div>
 
 <div id="config" hidden>
   <div class="cartao" role="dialog" aria-labelledby="cfgTitulo">
@@ -537,8 +566,8 @@
         <input id="cfgNovaPalavra" type="text" maxlength="20" placeholder="Nova palavra" autocomplete="off" spellcheck="false">
         <button type="submit">Adicionar</button>
       </form>
-      <small id="cfgPalavrasAviso">Só letras e números. Acento não precisa digitar: “Mamãe” vale com M-A-M-A-E.
-        A palavra SAIR é sempre aceita: é ela que fecha o brinquedo.</small>
+      <small id="cfgPalavrasAviso">Só letras e números. Com ou sem acento: “Mamãe” vale digitando o ã ou o a,
+        e o acento aparece quando a palavra se forma. A palavra SAIR é sempre aceita: é ela que fecha o brinquedo.</small>
     </div>
 
     <div class="campo">
@@ -547,6 +576,8 @@
         <select id="cfgVoz" aria-label="Voz"></select>
         <button id="cfgOuvir" type="button">▶ Ouvir</button>
       </span>
+      <small id="cfgVozGoogle" hidden>A do Google vem da internet: cada frase é baixada uma vez e fica
+        guardada no computador. Sem internet, o que ainda não foi baixado sai na voz da Maria, do Windows.</small>
     </div>
 
     <button id="cfgFechar" type="button" class="principal">Pronto</button>
@@ -747,18 +778,30 @@
   const parametroPalavras = parametros.get('palavras');
   const PALAVRAS_PADRAO = parametroPalavras
     ? parametroPalavras.split(',').map(p => p.trim()).filter(Boolean)
-    : ['Arthur', 'Gustavo', 'Daniela', 'Muller', 'MAMAE', 'PAPAI'];
+    : ['Arthur', 'Gustavo', 'Daniela', 'Muller', 'Mamãe', 'Papai'];
 
   // saída do adulto: mesma regra (só começa com o quadro vazio, ou seja, Esc
   // antes), mas em vez de soletrar, estoura tudo e fecha as duas telas
   const PALAVRA_SAIR = 'SAIR';
 
-  // o que se digita para formar a palavra: o teclado do brinquedo só aceita
-  // A-Z, 0-9 e Ç, então "Mamãe" se digita MAMAE (e a voz fala "Mamãe")
+  // as letras dos balões: maiúsculas e sem acento, menos o Ç (que é letra
+  // própria). "Mamãe" se forma com M-A-M-A-E, digitando o ã ou não
   function teclasDaPalavra(p) {
     return p.toUpperCase().normalize('NFD')
-      .replace(/Ç/g, 'Ç') // o Ç é a única acentuada que o teclado aceita
+      .replace(/Ç/g, 'Ç')
       .replace(/[̀-ͯ]/g, '');
+  }
+
+  // a palavra como está escrita na lista, com acento, uma letra para cada
+  // letra de teclasDaPalavra: é o que os balões mostram quando ela se forma
+  function letrasComAcento(p) {
+    const letras = [];
+    for (const c of p.normalize('NFC').toUpperCase()) {
+      const teclas = teclasDaPalavra(c);
+      if (teclas.length === 1) letras.push(c);
+      else letras.push(...teclas);
+    }
+    return letras;
   }
 
   // motivo para recusar a palavra na lista, ou null se ela serve
@@ -799,6 +842,7 @@
   function aplicaConfig() {
     TODAS_PALAVRAS = config.palavras.map(teclasDaPalavra).concat(PALAVRA_SAIR);
     carregaVozes();
+    preparaVozGoogle(); // palavra nova ou volta para a voz do Google
   }
 
   function salvaConfig() {
@@ -831,16 +875,80 @@
   function carregaVozes() {
     if (!('speechSynthesis' in window)) return;
     const vs = speechSynthesis.getVoices();
-    // a escolhida na engrenagem; se foi desinstalada, volta para a automática
-    voz = (config.voz && vs.find(v => v.voiceURI === config.voz)) || vozAutomatica(vs);
+    // a escolhida na engrenagem; se foi desinstalada, volta para a automática.
+    // No app, a automática é a reserva da voz do Google (sem internet): uma voz
+    // feminina como ela troca menos que o Daniel, o primeiro da lista do Windows.
+    voz = (config.voz && vs.find(v => v.voiceURI === config.voz))
+       || (quiosque && vs.find(v => /pt[-_]BR/i.test(v.lang) && /maria|francisca/i.test(v.name)))
+       || vozAutomatica(vs);
+  }
+
+  // ------------------------------------------------ voz do Google (só no app)
+  // No app a voz de fábrica é a do Google: o main.js baixa o mp3 de cada frase
+  // (uma vez só, depois fica guardado) e ele toca aqui pelo AudioContext. Se
+  // não vier — sem internet e frase ainda não guardada —, fala a voz do Windows.
+
+  const FRASE_TESTE = 'Olá! Vamos brincar?';
+  const audiosGoogle = new Map(); // frase -> AudioBuffer já decodificado
+  let preparando = false, prepararDeNovo = false;
+
+  function usaVozGoogle() { return !!quiosque && config.voz === ''; }
+
+  // tudo o que o brinquedo fala, para nenhuma letra esperar a internet
+  function frasesDoBrinquedo() {
+    return [...new Set([...Object.values(NOMES), ...ELOGIOS, 'Tchau!', FRASE_TESTE, ...config.palavras])];
+  }
+
+  async function audioGoogle(texto) {
+    if (audiosGoogle.has(texto)) return audiosGoogle.get(texto);
+    const mp3 = await quiosque.vozGoogle(texto);
+    if (!mp3 || !audio()) return null;
+    const buf = await ac.decodeAudioData(mp3.buffer.slice(mp3.byteOffset, mp3.byteOffset + mp3.byteLength));
+    audiosGoogle.set(texto, buf);
+    return buf;
+  }
+
+  // uma frase de cada vez: na primeira vez do app, elas vêm todas da internet
+  async function preparaVozGoogle() {
+    if (!usaVozGoogle()) return;
+    if (preparando) { prepararDeNovo = true; return; }
+    preparando = true;
+    do {
+      prepararDeNovo = false;
+      for (const texto of frasesDoBrinquedo()) {
+        if (!usaVozGoogle()) break;
+        try { await audioGoogle(texto); } catch (err) { /* mp3 estragado: essa sai pelo Windows */ }
+      }
+    } while (prepararDeNovo);
+    preparando = false;
   }
 
   aplicaConfig();
   if ('speechSynthesis' in window) speechSynthesis.addEventListener('voiceschanged', carregaVozes);
 
+  let falaGoogle = null; // a fala do Google tocando agora
+  let nFala = 0;         // só a fala mais recente toca: uma que ainda estava
+                         // baixando não pode sair depois da seguinte
+
   function fala(texto) {
+    const minha = ++nFala;
+    if (falaGoogle) { try { falaGoogle.stop(); } catch (e) { /* já tinha parado */ } falaGoogle = null; }
+    if ('speechSynthesis' in window) { try { speechSynthesis.cancel(); } catch (e) { /* ignora */ } }
+    if (!usaVozGoogle()) { falaPeloNavegador(texto); return; }
+
+    audioGoogle(texto).catch(() => null).then(buf => {
+      if (minha !== nFala) return;
+      if (!buf) { falaPeloNavegador(texto); return; }
+      const fonte = ac.createBufferSource();
+      fonte.buffer = buf;
+      fonte.connect(ac.destination); // volume cheio, como a voz do Windows
+      fonte.start();
+      falaGoogle = fonte;
+    });
+  }
+
+  function falaPeloNavegador(texto) {
     if (!('speechSynthesis' in window)) return;
-    try { speechSynthesis.cancel(); } catch (e) { /* ignora */ }
     const u = new SpeechSynthesisUtterance(texto);
     if (voz) u.voice = voz;
     u.lang = 'pt-BR';
@@ -1020,7 +1128,7 @@
 
     if (!silencioso) somEstouro();
     confeteEm(b.px, b.py, b.hue, 14);
-    if (b.ch !== ' ') letraVoando(b.px, b.py, b.ch, b.tam);
+    if (b.ch !== ' ') letraVoando(b.px, b.py, b.rotulo || b.ch, b.tam);
 
     b.el.classList.add('estourou');
     setTimeout(() => b.el.remove(), 220);
@@ -1174,12 +1282,25 @@
     });
 
     // espera os balões terminarem de se acomodar para só então falar o nome
-    // (assim a última letra digitada também é ouvida, sem ser cortada)
-    if (falar) {
-      const houveTravessia = letras.some(info => info.tela !== destino);
-      const espera = (houveTravessia ? CRUZA_DUR : 0) + EGG_DURACAO;
-      setTimeout(() => fala(palavra), espera * 1000);
-    }
+    // (assim a última letra digitada também é ouvida, sem ser cortada) e
+    // mostrar os acentos — os que vieram da outra tela já chegaram também
+    const houveTravessia = letras.some(info => info.tela !== destino);
+    const espera = (houveTravessia ? CRUZA_DUR : 0) + EGG_DURACAO;
+    if (falar) setTimeout(() => fala(palavra), espera * 1000);
+    if (MEU_ID === destino) setTimeout(() => mostraAcentos(palavra, letras), espera * 1000);
+  }
+
+  function mostraAcentos(palavra, letras) {
+    const comAcento = letrasComAcento(palavra);
+    if (comAcento.length !== letras.length) return;
+    letras.forEach((info, i) => {
+      const b = baloes.find(x => x.id === info.id);
+      if (!b || comAcento[i] === b.ch) return;
+      b.rotulo = comAcento[i]; // b.ch continua sem acento: é a tecla que estoura
+      const el = b.el.querySelector('.letra');
+      el.textContent = b.rotulo;
+      el.classList.add('com-acento');
+    });
   }
 
   // o balão sai pela borda esquerda desta tela e a tela de destino o faz
@@ -1344,6 +1465,14 @@
       ceuNoite.appendChild(el);
     }
   })();
+
+  // cada tela sorteia em que ponto do caminho cada nuvem começa: com a fase
+  // fixa no HTML, as duas telas abriam com as nuvens idênticas, lado a lado.
+  // O caminho vai de -40vw a 120vw (ver 'passa'); o sorteio fica no trecho
+  // entre 0 e 96vw, senão a nuvem pode nascer fora da tela e o céu abre vazio.
+  for (const n of document.querySelectorAll('.nuvem')) {
+    n.style.animationDelay = -rand(0.25, 0.85) * parseFloat(n.style.animationDuration) + 's';
+  }
 
   sol.style.top = NO_CEU;
   lua.style.top = ESCONDIDO;
@@ -1788,8 +1917,10 @@
         return;
       }
 
-      // só A-Z, 0-9 e Ç: as demais acentuadas (á, ã, ê...) ficam de fora de propósito
-      const ch = k.toUpperCase();
+      // A-Z, 0-9 e Ç. A acentuada vale como a letra sem acento (ã → A): o
+      // balão mostra só a letra, e o acento aparece quando ela completa uma
+      // palavra secreta escrita com ele
+      const ch = teclasDaPalavra(k);
       if (/^[A-Z0-9Ç]$/.test(ch)) {
         e.preventDefault();
         escondeDica();
@@ -1850,7 +1981,10 @@
       ultX = ax; ultY = ay;
     }
 
-    if (e.clientY < 70) mostraUI();
+    // no Chrome os botões voltam com o mouse no topo (o "Tela cheia" faz falta
+    // depois que o Esc sai dela); no app a engrenagem só aparece ao abrir, para
+    // a criança não achá-la passeando com a abelha
+    if (e.clientY < 70 && !quiosque) mostraUI();
   }, { passive: true });
 
   addEventListener('pointerdown', e => {
@@ -1882,7 +2016,8 @@
     if (ehSegunda) return;
     ui.classList.remove('oculto');
     clearTimeout(timerUI);
-    timerUI = setTimeout(() => ui.classList.add('oculto'), 4000);
+    // ao esconder, a marca d'água com a saída aparece no lugar (ver #marca)
+    timerUI = setTimeout(() => ui.classList.add('oculto'), 5000);
   }
 
   let timerDica = null;
@@ -1931,7 +2066,6 @@
   const cfgAviso      = document.getElementById('cfgPalavrasAviso');
   const cfgVoz        = document.getElementById('cfgVoz');
   const AVISO_PALAVRAS = cfgAviso.innerHTML;
-  const FRASE_TESTE   = 'Olá! Vamos brincar?';
 
   cfgMax.min = MAX_MIN;
   cfgMax.max = MAX_MAX;
@@ -1952,7 +2086,7 @@
     if (painel.contains(document.activeElement)) document.activeElement.blur();
     painel.hidden = true;
     document.body.classList.remove('configurando');
-    mostraUI();
+    // a engrenagem não volta: fica a marca d'água (no app, nem o mouse a traz)
   }
 
   function preencheConfig() {
@@ -2020,7 +2154,8 @@
     // português primeiro: é a língua do brinquedo
     const ordem = [...vs].sort((a, b) => (ehPt(b) - ehPt(a)) || a.name.localeCompare(b.name));
     cfgVoz.replaceChildren(
-      new Option('Automática' + (auto ? ' (' + auto.name + ')' : ''), ''),
+      // no app, a de fábrica é a do Google (ver usaVozGoogle)
+      new Option(quiosque ? 'Google' : 'Automática' + (auto ? ' (' + auto.name + ')' : ''), ''),
       ...ordem.map(v => new Option(v.name + ' — ' + v.lang, v.voiceURI))
     );
     cfgVoz.value = vs.some(v => v.voiceURI === config.voz) ? config.voz : '';
@@ -2108,9 +2243,11 @@
   if (quiosque) {
     document.getElementById('btFull').remove();
     document.getElementById('btSegunda').remove();
+    document.getElementById('cfgVozGoogle').hidden = false;
   }
   if (ehSegunda) {
     ui.remove();
+    document.getElementById('marca').remove();
     sol.remove();
     lua.remove();
     if (!quiosque) dica.textContent = 'Continuação da outra tela — clique para tela cheia 🎈';

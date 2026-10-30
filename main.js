@@ -7,6 +7,8 @@
 // vira a tela 1 e o próximo monitor, a tela 2. Com um monitor só, abre só a 1.
 
 const { app, BrowserWindow, Menu, ipcMain, screen } = require('electron');
+const crypto = require('crypto');
+const fs = require('fs/promises');
 const path = require('path');
 
 // abrir de novo com o quiosque já no ar não empilha outro por cima
@@ -47,7 +49,81 @@ ipcMain.on('sair', () => {
   app.quit();
 });
 
+// ------------------------------------------------------------ voz do Google
+// A voz do Google que o Chrome tem não vem no Electron. A mesma voz sai do
+// serviço de fala do Google Tradutor — não oficial, pode mudar sem aviso —,
+// então cada frase é baixada uma vez e guardada no disco: daí em diante toca
+// na hora e sem internet. Quando não dá para baixar, a página fala pela voz
+// do Windows.
+
+const VOZ_URL = 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=pt-BR&q=';
+const VOZ_TEMPO_MAX = 4000;    // mais que isso, a letra sairia atrasada demais
+const VOZ_PAUSA_FALHA = 60000; // depois de uma falha, nem tenta por um tempo: sem
+                               // internet, cada tecla esperaria o erro
+const VOZ_INTERVALO = 250;     // entre um download e outro: na primeira vez são ~50
+                               // frases de uma vez, e rajada é o que o Google barra
+let vozFalhouEm = 0;
+let vozProximoEm = 0;
+const vozBaixando = new Map(); // frase -> download em andamento (as duas telas pedem as mesmas)
+
+function arquivoDaFrase(texto) {
+  const nome = crypto.createHash('sha1').update('pt-BR|' + texto).digest('hex');
+  return path.join(app.getPath('userData'), 'vozes', nome + '.mp3');
+}
+
+async function baixaFrase(texto, arquivo) {
+  // fetch do Node, não o net.fetch do Electron: o net.fetch vai pela sessão do
+  // Chromium, com o cookie que o Google deixa nela, e depois de umas dezenas de
+  // frases o Google passou a responder 429 (pedidos demais) a ele — enquanto o
+  // mesmo pedido sem cookie, como o do curl, continuava funcionando
+  const espera = vozProximoEm - Date.now();
+  vozProximoEm = Math.max(Date.now(), vozProximoEm) + VOZ_INTERVALO;
+  if (espera > 0) await new Promise(ok => setTimeout(ok, espera));
+  const r = await fetch(VOZ_URL + encodeURIComponent(texto), { signal: AbortSignal.timeout(VOZ_TEMPO_MAX) });
+  const tipo = r.headers.get('content-type') || '';
+  if (!r.ok || !tipo.startsWith('audio/')) throw new Error(`resposta ${r.status} ${tipo}`);
+  const audio = Buffer.from(await r.arrayBuffer());
+  await fs.mkdir(path.dirname(arquivo), { recursive: true });
+  // grava com outro nome e só depois renomeia: um app fechado no meio da
+  // gravação não deixa um mp3 pela metade no lugar da frase
+  await fs.writeFile(arquivo + '.tmp', audio);
+  await fs.rename(arquivo + '.tmp', arquivo);
+  return audio;
+}
+
+// o mp3 da frase, ou null quando não deu (a página então usa a voz do Windows)
+async function vozGoogle(texto) {
+  const arquivo = arquivoDaFrase(texto);
+  try { return await fs.readFile(arquivo); } catch (err) { /* ainda não baixada */ }
+
+  if (!vozBaixando.has(texto)) {
+    if (Date.now() - vozFalhouEm < VOZ_PAUSA_FALHA) return null;
+    vozBaixando.set(texto, baixaFrase(texto, arquivo)
+      .catch(err => {
+        console.warn('voz do Google: não deu para baixar', JSON.stringify(texto), '-', err.message);
+        vozFalhouEm = Date.now();
+        return null;
+      })
+      .finally(() => vozBaixando.delete(texto)));
+  }
+  return vozBaixando.get(texto);
+}
+
+ipcMain.handle('voz-google', (e, texto) =>
+  typeof texto === 'string' && texto && texto.length <= 200 ? vozGoogle(texto) : null);
+
 app.whenReady().then(() => {
+  // Alt+Tab, tecla Windows e companhia (ver teclado.js). Sem a trava o
+  // brinquedo funciona igual, só com esses atalhos livres.
+  if (process.platform === 'win32') {
+    try {
+      const soltaTeclado = require('./teclado').travaTeclado();
+      app.on('will-quit', soltaTeclado);
+    } catch (err) {
+      console.warn('teclado: sem a trava de atalhos -', err.message);
+    }
+  }
+
   const principal = screen.getPrimaryDisplay();
   const outra = screen.getAllDisplays().find(d => d.id !== principal.id);
 
