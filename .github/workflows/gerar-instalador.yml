@@ -1,0 +1,35 @@
+# Gera o instalador do Windows a cada push na main (ou pelo botão "Run
+# workflow" na aba Actions). O instalador fica em "Artifacts", na página da
+# execução. Em repositório público, as máquinas e o armazenamento são gratuitos.
+name: Gerar instalador
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  instalador:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # só o instalador (o .bat local gera também o portátil); --publish never
+      # porque o electron-builder tentaria publicar sozinho ao se ver num CI
+      - run: npx electron-builder --win nsis --publish never
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Baloes-de-Letras-instalador
+          path: dist/*instalador.exe
+          if-no-files-found: error

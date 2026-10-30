@@ -27,6 +27,16 @@ Dois cliques em **`Gerar Executável.bat`**. Ele instala o que faltar e gera, na
 - **`Balões de Letras.exe`** — um arquivo só, que roda sem instalar (dá para levar num pen
   drive). Demora alguns segundos para abrir, porque se descompacta a cada vez.
 
+**Pelo GitHub:** a cada push na `main`, o GitHub gera o instalador sozinho
+(`.github/workflows/gerar-instalador.yml`). Para baixar: aba **Actions** do repositório →
+a execução mais recente de "Gerar instalador" → **Artifacts** → `Baloes-de-Letras-instalador`
+(vem num .zip com o instalador dentro). Também dá para gerar sem push, pelo botão **Run
+workflow** na mesma aba. Em repositório público isso não custa nada.
+
+Junto do executável vai o `LICENCAS-DE-TERCEIROS.txt`, com as licenças de tudo o que o app
+redistribui (Electron, Koffi, o desenho da engrenagem do Material Icons, o NSIS do
+instalador e o Elevate), além das licenças do Electron e do Chromium que ele já traz.
+
 O ícone (três balões com A, B e C; nos tamanhos pequenos, um balão só) é o `build/icon.ico`,
 desenhado a partir de `build/icone-3-baloes.svg` e `build/icone-1-balao.svg`.
 
