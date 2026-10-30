@@ -559,7 +559,7 @@
     <div class="campo">
       <span>Máximo de balões</span>
       <span class="linha">
-        <input id="cfgMax" type="range" min="5" max="50" step="1" aria-label="Máximo de balões">
+        <input id="cfgMax" type="range" min="5" max="38" step="1" aria-label="Máximo de balões">
         <output id="cfgMaxValor" for="cfgMax"></output>
       </span>
       <small>Somando as duas telas. Passando disso, o balão mais antigo vai embora.</small>
@@ -792,7 +792,7 @@
   const parametroPalavras = parametros.get('palavras');
   const PALAVRAS_PADRAO = parametroPalavras
     ? parametroPalavras.split(',').map(p => p.trim()).filter(Boolean)
-    : ['Arthur', 'Gustavo', 'Daniela', 'Muller', 'Mamãe', 'Papai'];
+    : ['Mamãe', 'Papai'];
 
   // saída do adulto: mesma regra (só começa com o quadro vazio, ou seja, Esc
   // antes), mas em vez de soletrar, estoura tudo e fecha as duas telas
@@ -838,7 +838,10 @@
 
   const CHAVE_CONFIG = 'baloes:config';
   const MAX_PADRAO = 25;
-  const MAX_MIN = 5, MAX_MAX = 50; // os mesmos do controle deslizante
+  // os mesmos do controle deslizante. 38 é o que dá para ter na tela: cada
+  // tecla tem um balão só (repetir estoura), e são 26 letras + Ç + espaço + 10
+  // números — só letra repetida de palavra secreta passa disso
+  const MAX_MIN = 5, MAX_MAX = 38;
   const FALA_MAX = 40;             // letras do campo de fala de cada tecla
 
   // só o que alguém escreveu: tecla sem fala aqui fala a própria letra
@@ -1100,10 +1103,9 @@
     const i = baloes.indexOf(b);
     if (i >= 0) baloes.splice(i, 1);
     // sobe a partir de onde está desenhado (flutuando, ou no lugar da palavra
-    // secreta), descontando o balanço de quem vai embora: sem pulo
-    b.x = b.px - Math.sin(t * 1.1 + b.fase) * 10;
-    b.y = b.py;
+    // secreta): sem pulo
     b.estado = 'vai';
+    fixaOndeEsta(b);
     b.eggT0 = null;
     fugindo.push(b);
     publicaInventario();
@@ -1278,14 +1280,18 @@
     const palavra = config.palavras.find(p => teclasDaPalavra(p) === atual);
     if (!palavra) return;
 
+    // uma palavra que é o começo de outra ("Maria" e "Maria Helena") se forma
+    // e é falada, mas a tentativa continua: dá para seguir digitando até a maior
+    const continua = TODAS_PALAVRAS.some(p => p.length > atual.length && p.startsWith(atual));
+
     const letras = sequencia.map(s => ({ id: s.id, ch: s.ch, tela: s.tela }));
     // a palavra sempre se monta na tela principal; se ela não estiver aberta
     // (rodando só a segunda tela), monta aqui mesmo
     const destino = (MEU_ID === TELA_PRINCIPAL || outraTelaPresente()) ? TELA_PRINCIPAL : MEU_ID;
-    defineSequencia([], false); // o 'egg' já leva a notícia para a outra tela
+    if (!continua) defineSequencia([], false); // o 'egg' já leva a notícia para a outra tela
 
-    enviaEvento('egg', { palavra, letras, destino });
-    ativaEasterEgg(palavra, letras, destino, true);
+    enviaEvento('egg', { palavra, letras, destino, continua });
+    ativaEasterEgg(palavra, letras, destino, true, continua);
   }
 
   // onde cada letra da palavra vai parar, na largura desta tela
@@ -1300,29 +1306,45 @@
   // roda nas duas telas com a mesma lista: cada uma cuida dos balões que são
   // seus — a tela de destino puxa os dela para o lugar da palavra, a outra
   // manda os dela atravessarem
-  function ativaEasterEgg(palavra, letras, destino, falar) {
+  let nPalavra = 0; // conta as palavras formadas, para a menor saber se a maior já veio
+
+  function ativaEasterEgg(palavra, letras, destino, falar, continua) {
     const slots = slotsDaPalavra(letras.length);
     const y = H * ALTURA_PALAVRA;
+    const minha = ++nPalavra;
 
     letras.forEach((info, i) => {
       const b = baloes.find(x => x.id === info.id);
       if (!b) return; // esse balão é da outra tela
       if (MEU_ID === destino) {
+        // já estava na palavra menor: o puxão para o lugar novo parte de
+        // onde ele está, e reto (ele já tinha parado de balançar)
+        if (b.eggT0 != null) b.semGiro = true;
+        fixaOndeEsta(b);
         b.eggAlvoX = slots[i];
         b.eggAlvoY = y;
         b.eggT0 = t;
-      } else {
+      } else if (b.estado !== 'sai') { // já a caminho (palavra menor): não manda de novo
         iniciaTravessia(b, i, letras.length, destino);
       }
     });
 
+    // daqui em diante as letras dela estão todas na tela de destino
+    if (continua) sequencia = sequencia.map(s => ({ ...s, tela: destino }));
+
     // espera os balões terminarem de se acomodar para só então falar o nome
     // (assim a última letra digitada também é ouvida, sem ser cortada) e
-    // mostrar os acentos — os que vieram da outra tela já chegaram também
+    // mostrar os acentos — os que vieram da outra tela já chegaram também.
+    // A menor não fala nem arremata se, nesse meio-tempo, a criança seguiu
+    // digitando: a maior vem aí.
     const houveTravessia = letras.some(info => info.tela !== destino);
     const espera = (houveTravessia ? CRUZA_DUR : 0) + EGG_DURACAO;
-    if (falar) setTimeout(() => fala(palavra), espera * 1000);
-    if (MEU_ID === destino) setTimeout(() => arremataPalavra(palavra, letras), espera * 1000);
+    const superada = () => continua && (nPalavra !== minha || sequencia.length > letras.length);
+    setTimeout(() => {
+      if (superada()) return;
+      if (falar) fala(palavra);
+      if (MEU_ID === destino) arremataPalavra(palavra, letras);
+    }, espera * 1000);
   }
 
   // a palavra pronta: as letras ganham o acento de como ela está escrita na
@@ -1346,7 +1368,15 @@
   // o balão sai pela borda esquerda desta tela e a tela de destino o faz
   // reentrar pela borda direita dela na hora combinada — os monitores ficam
   // lado a lado, então parece um movimento só, contínuo entre as duas
+  // id -> quando começou a atravessar (ver confereSequencia)
+  const atravessouEm = new Map();
+  function marcaTravessia(id) {
+    if (atravessouEm.size > 200) atravessouEm.clear();
+    atravessouEm.set(id, Date.now());
+  }
+
   function iniciaTravessia(b, slot, n, destino) {
+    marcaTravessia(b.id);
     b.estado = 'sai';
     b.saiT0 = t;
     b.saiX0 = b.px;
@@ -1358,6 +1388,42 @@
       slot, n, para: destino,
       chegaEm: Date.now() + CRUZA_DUR * 1000
     });
+  }
+
+  // onde o balão fica sem o puxão da palavra secreta: flutuando no lugar dele,
+  // ou subindo (ou indo embora) com um balanço leve
+  function posicaoBase(b, t) {
+    if (b.estado === 'flutua') {
+      // a oscilação de flutuação entra aos poucos (não de uma vez) para não
+      // dar um "pulinho" no instante em que o balão termina de subir
+      const w = clamp((t - b.tFlutua) / 1.2, 0, 1);
+      return {
+        px: b.x + Math.sin(t * 0.9 + b.fase) * 20 * w + Math.sin(t * 1.1 + b.fase) * 10 * (1 - w),
+        py: b.alvoY + Math.sin(t * 1.6 + b.fase) * 10 * w,
+        giro: Math.sin(t * 0.9 + b.fase) * 4 * w + Math.sin(t * 1.1 + b.fase) * 3 * (1 - w)
+      };
+    }
+    return {
+      px: b.x + Math.sin(t * 1.1 + b.fase) * 10,
+      py: b.y,
+      giro: Math.sin(t * 1.1 + b.fase) * 3
+    };
+  }
+
+  // Muda a posição de base para coincidir com a desenhada agora: o que vier
+  // depois (puxão para uma palavra maior, subir e ir embora) parte daqui, sem
+  // pulo — mesmo que o balão estivesse sendo puxado para outra palavra.
+  function fixaOndeEsta(b) {
+    if (b.estado === 'chega' || b.estado === 'sai') return;
+    const base = posicaoBase(b, t);
+    b.x += b.px - base.px;
+    if (b.estado === 'flutua') {
+      b.alvoY += b.py - base.py;
+    } else {
+      b.y += b.py - base.py;
+      // ainda subindo, mas já acima de onde ia parar: para ali mesmo
+      if (b.estado === 'sobe' && b.y < b.alvoY) b.alvoY = b.y;
+    }
   }
 
   function desenhaBalao(b, t) {
@@ -1373,20 +1439,7 @@
       px = b.saiX0 + (-b.tam - b.saiX0) * (p * p);
       py = b.saiY0 + (H * ALTURA_PALAVRA - b.saiY0) * facil;
     } else {
-      let y = b.y, bal = 0;
-      if (b.estado === 'flutua') {
-        // a oscilação de flutuação entra aos poucos (não de uma vez) para não
-        // dar um "pulinho" no instante em que o balão termina de subir
-        const w = clamp((t - b.tFlutua) / 1.2, 0, 1);
-        y = b.alvoY + Math.sin(t * 1.6 + b.fase) * 10 * w;
-        bal = Math.sin(t * 0.9 + b.fase) * 20 * w + Math.sin(t * 1.1 + b.fase) * 10 * (1 - w);
-        giro = Math.sin(t * 0.9 + b.fase) * 4 * w + Math.sin(t * 1.1 + b.fase) * 3 * (1 - w);
-      } else {
-        bal = Math.sin(t * 1.1 + b.fase) * 10;
-        giro = Math.sin(t * 1.1 + b.fase) * 3;
-      }
-      px = b.x + bal;
-      py = y;
+      ({ px, py, giro } = posicaoBase(b, t));
 
       if (b.eggT0 != null) {
         // puxa suavemente (sem teletransportar) até a posição da palavra do
@@ -1397,7 +1450,7 @@
         const alvoY = b.eggAlvoY + Math.sin(t * 1.6 + b.fase) * 6;
         px += (b.eggAlvoX - px) * facil;
         py += (alvoY - py) * facil;
-        giro *= (1 - facil);
+        giro *= b.semGiro ? 0 : (1 - facil);
       }
     }
 
@@ -1613,8 +1666,8 @@
         break;
 
       case 'egg':
-        defineSequencia([], false);
-        ativaEasterEgg(d.palavra, d.letras || [], d.destino, false);
+        if (!d.continua) defineSequencia([], false);
+        ativaEasterEgg(d.palavra, d.letras || [], d.destino, false, d.continua);
         break;
 
       case 'atravessa':
@@ -1636,6 +1689,7 @@
   // na hora combinada (as duas janelas são deste PC, o relógio é o mesmo)
   function recebeTravessia(d) {
     if (baloes.some(b => b.id === d.id)) return;
+    marcaTravessia(d.id);
     criaBalao(d.ch, {
       id: d.id, nasc: d.nasc, hue: d.hue, tam: d.tam,
       silencioso: true,
@@ -1648,12 +1702,19 @@
   // se esse aviso se perder, aqui a tentativa também morre ao ver que um balão
   // dela sumiu da outra tela. A folga é generosa de propósito — abortar por
   // engano estragaria a palavra na cara do usuário.
+  //
+  // Depois de uma palavra menor que continua numa maior, as letras dela
+  // atravessam para a tela de destino no meio da tentativa: durante a
+  // travessia o balão não está no inventário de nenhuma das duas (vai saindo
+  // de uma, ainda não entrou na outra), e isso não é sumir.
   function confereSequencia() {
     if (!sequencia.length) return;
     const agora = Date.now();
     const sumiu = sequencia.some(s =>
       s.tela !== MEU_ID &&
       !espelho.baloes.some(b => b.id === s.id) &&
+      !baloes.some(b => b.id === s.id) &&
+      !(agora - (atravessouEm.get(s.id) || 0) < CRUZA_DUR * 1000 + 1500) &&
       agora - s.nasc > 1200); // inventário mais velho que a criação não vale
     if (sumiu) defineSequencia([], true);
   }

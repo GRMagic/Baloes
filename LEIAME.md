@@ -60,11 +60,16 @@ propósito, para a criança não achá-la passeando com a abelha: para mexer nas
 depois, feche (`sair`) e abra de novo. Aberta no Chrome, ela volta junto com os botões quando
 o mouse chega perto do topo. Clicando nela, abre o painel de configurações:
 
-- **Máximo de balões** — de 5 a 50 (25 de fábrica), somando as duas telas. Passando disso, o
-  balão mais antigo vai embora. Durante uma palavra secreta o limite não vale, senão uma
-  palavra maior que ele nunca se formaria.
-- **Palavras secretas** — edite direto no campo, tire com o **✕** e acrescente com
-  **Adicionar** (ou Enter). Letras e números, e espaço entre palavras: "Maria Helena" vale,
+- **Máximo de balões** — de 5 a 38 (25 de fábrica), somando as duas telas. Passando disso, o
+  balão mais antigo vai embora. O teto é 38 porque é o que dá para ter na tela: cada tecla tem
+  um balão só (apertar de novo estoura), e são 26 letras + Ç + espaço + 10 números. Durante
+  uma palavra secreta o limite não vale, senão uma palavra maior que ele nunca se formaria.
+- **Palavras secretas** — de fábrica, só **Mamãe** e **Papai**. Edite direto no campo, tire
+  com o **✕** e acrescente com **Adicionar** (ou Enter). Uma palavra pode ser o começo de
+  outra ("Maria" e "Maria Helena", "Pai" e "Paizinho"): ao completar a menor, ela se forma e
+  é falada, mas dá para seguir digitando até a maior — aí os balões se reorganizam nela. (Se
+  a criança seguir digitando logo, a menor nem chega a ser falada.) Letras e números, e espaço
+  entre palavras: "Maria Helena" vale,
   digitando o espaço também (ele faz um balão em branco, que sobe e vai embora quando a
   palavra se forma, deixando o vão entre os nomes). Escreva com acento: "Mamãe" se forma
   digitando o ã ou só o a, e quando a palavra se completa os balões passam a mostrar
