@@ -68,6 +68,12 @@ o mouse chega perto do topo. Clicando nela, abre o painel de configurações:
   digitando o ã ou só o a, e quando a palavra se completa os balões passam a mostrar
   **MAMÃE** e a voz fala "Mamãe" certinho. A palavra **SAIR** não entra na lista: ela é
   sempre aceita, porque é a que fecha o brinquedo.
+- **O que a voz fala em cada letra e número** — uma seção que abre com um clique, com um
+  campo para cada tecla (A–Z, Ç, 0–9). Em branco, a voz fala a própria letra; escrevendo
+  algo, fala o que foi escrito — por exemplo "Ê de estacionamento" no E. Ao confirmar o
+  campo (Enter ou clicando fora), a voz já fala o texto novo, para ouvir como ficou. Para
+  o som da letra, use **Ê** e **Ô**: o E e o O sozinhos a voz pode ler como as palavras "e"
+  e "o" (por isso o padrão deles já é Ê e Ô, e o do Ç é "Cê cedilha").
 - **Voz** — no app, a primeira é a do **Google** (a de fábrica); depois vêm as vozes
   instaladas no Windows, as de português primeiro. No Chrome, a primeira é a "Automática",
   que escolhe a melhor de português sozinha. Trocar de voz já fala uma frase de teste, e o
@@ -175,9 +181,10 @@ acima).
 ## Voz
 
 Falar só a letra pura (sem soletração tipo "éfe", "ésse", sem pontuação extra) foi o que soou
-melhor nos testes — por isso o nome de várias letras no código é a própria letra. A exceção é
-o Ç, que é falado como "cê cedilha": é o nome dele mesmo, e o caractere sozinho nem sempre é
-lido pela voz.
+melhor nos testes — por isso, de fábrica, cada tecla fala a própria letra. As exceções são o E
+e o O, escritos "Ê" e "Ô" para não virarem as palavras "e" e "o", e o Ç, falado como "cê
+cedilha": é o nome dele mesmo, e o caractere sozinho nem sempre é lido pela voz. Tudo isso se
+troca na engrenagem (veja "Configurações").
 
 - **No app**, a voz de fábrica é a **do Google**, a mesma que o Chrome usa. O Electron não
   traz essa voz, então o app busca o áudio de cada frase no serviço de fala do Google
