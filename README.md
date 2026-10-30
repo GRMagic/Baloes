@@ -201,7 +201,7 @@ Outras formas, se precisar:
 
 - **App**: se o `sair` não funcionar, aperte **Ctrl+Alt+Del** e escolha **Gerenciador de
   Tarefas** (o Ctrl+Shift+Esc fica travado no app, para a criança não abri-lo). Ele abre por
-  cima do quiosque. Encontre **Electron** na lista, clique nele e em **Finalizar tarefa**.
+  cima do quiosque. Encontre **Balões e Letras** na lista, clique nele e em **Finalizar tarefa**.
   Fechando assim, os atalhos de acessibilidade (Shift 5 vezes...) só voltam no próximo login
   do Windows.
 - **Chrome** (`index.html`): **Esc** sai da tela cheia, depois **Alt+F4** ou o X fecha
