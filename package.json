@@ -12,6 +12,7 @@
   "build": {
     "appId": "baloes.de.letras",
     "files": ["index.html", "main.js", "preload.js", "teclado.js"],
+    "extraFiles": ["LICENCAS-DE-TERCEIROS.txt"],
     "directories": { "output": "dist" },
     "win": { "target": ["nsis", "portable"] },
     "nsis": { "artifactName": "Balões de Letras - instalador.${ext}" },
