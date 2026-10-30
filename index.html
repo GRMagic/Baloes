@@ -569,11 +569,12 @@
       <span>Palavras secretas</span>
       <ul id="cfgPalavras"></ul>
       <form id="cfgNova" class="linha">
-        <input id="cfgNovaPalavra" type="text" maxlength="20" placeholder="Nova palavra" autocomplete="off" spellcheck="false">
+        <input id="cfgNovaPalavra" type="text" maxlength="30" placeholder="Nova palavra" autocomplete="off" spellcheck="false">
         <button type="submit">Adicionar</button>
       </form>
-      <small id="cfgPalavrasAviso">Só letras e números. Com ou sem acento: “Mamãe” vale digitando o ã ou o a,
-        e o acento aparece quando a palavra se forma. A palavra SAIR é sempre aceita: é ela que fecha o brinquedo.</small>
+      <small id="cfgPalavrasAviso">Letras e números, com espaço entre as palavras (“Maria Helena” se digita com o espaço).
+        Com ou sem acento: “Mamãe” vale digitando o ã ou o a, e o acento aparece quando a palavra se forma.
+        A palavra SAIR é sempre aceita: é ela que fecha o brinquedo.</small>
     </div>
 
     <details class="campo" id="cfgFalasBloco">
@@ -817,11 +818,15 @@
     return letras;
   }
 
+  // como a palavra fica guardada: sem espaço nas pontas e um só entre as palavras
+  function arrumaEspacos(p) { return p.trim().replace(/\s+/g, ' '); }
+
   // motivo para recusar a palavra na lista, ou null se ela serve
   function problemaNaPalavra(p, lista, ignorar) {
     const teclas = teclasDaPalavra(p);
-    if (teclas.length < 2) return 'A palavra precisa de pelo menos 2 letras.';
-    if (!/^[A-Z0-9Ç]+$/.test(teclas)) return 'Use só letras e números, sem espaço nem símbolo.';
+    if (teclas.replace(/ /g, '').length < 2) return 'A palavra precisa de pelo menos 2 letras.';
+    // o espaço vale entre palavras ("Maria Helena"): ele também é digitado
+    if (!/^[A-Z0-9Ç]+( [A-Z0-9Ç]+)*$/.test(teclas)) return 'Use só letras e números, com um espaço entre as palavras.';
     if (teclas === PALAVRA_SAIR) return 'SAIR já é a palavra que fecha o brinquedo.';
     if (lista.some((q, i) => i !== ignorar && teclasDaPalavra(q) === teclas)) return 'Essa palavra já está na lista.';
     return null;
@@ -1094,6 +1099,10 @@
   function soltaBalao(b) {
     const i = baloes.indexOf(b);
     if (i >= 0) baloes.splice(i, 1);
+    // sobe a partir de onde está desenhado (flutuando, ou no lugar da palavra
+    // secreta), descontando o balanço de quem vai embora: sem pulo
+    b.x = b.px - Math.sin(t * 1.1 + b.fase) * 10;
+    b.y = b.py;
     b.estado = 'vai';
     b.eggT0 = null;
     fugindo.push(b);
@@ -1313,15 +1322,20 @@
     const houveTravessia = letras.some(info => info.tela !== destino);
     const espera = (houveTravessia ? CRUZA_DUR : 0) + EGG_DURACAO;
     if (falar) setTimeout(() => fala(palavra), espera * 1000);
-    if (MEU_ID === destino) setTimeout(() => mostraAcentos(palavra, letras), espera * 1000);
+    if (MEU_ID === destino) setTimeout(() => arremataPalavra(palavra, letras), espera * 1000);
   }
 
-  function mostraAcentos(palavra, letras) {
+  // a palavra pronta: as letras ganham o acento de como ela está escrita na
+  // lista, e o balão em branco do espaço ("Maria Helena") sobe e vai embora,
+  // deixando o vão entre as palavras
+  function arremataPalavra(palavra, letras) {
     const comAcento = letrasComAcento(palavra);
     if (comAcento.length !== letras.length) return;
     letras.forEach((info, i) => {
       const b = baloes.find(x => x.id === info.id);
-      if (!b || comAcento[i] === b.ch) return;
+      if (!b) return;
+      if (b.ch === ' ') { soltaBalao(b); return; }
+      if (comAcento[i] === b.ch) return;
       b.rotulo = comAcento[i]; // b.ch continua sem acento: é a tecla que estoura
       const el = b.el.querySelector('.letra');
       el.textContent = b.rotulo;
@@ -2194,11 +2208,11 @@
       const campo = document.createElement('input');
       campo.type = 'text';
       campo.value = p;
-      campo.maxLength = 20;
+      campo.maxLength = 30;
       campo.spellcheck = false;
       campo.setAttribute('aria-label', 'Palavra ' + (i + 1));
       campo.addEventListener('change', () => {
-        const nova = campo.value.trim();
+        const nova = arrumaEspacos(campo.value);
         const erro = problemaNaPalavra(nova, config.palavras, i);
         if (erro) {
           avisaPalavras(nova ? erro : 'Para tirar uma palavra da lista, use o ✕.');
@@ -2252,7 +2266,7 @@
 
   cfgNova.addEventListener('submit', e => {
     e.preventDefault();
-    const nova = cfgNovaPalavra.value.trim();
+    const nova = arrumaEspacos(cfgNovaPalavra.value);
     if (!nova) return;
     const erro = problemaNaPalavra(nova, config.palavras, -1);
     if (erro) { avisaPalavras(erro); return; }

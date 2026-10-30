@@ -64,7 +64,9 @@ o mouse chega perto do topo. Clicando nela, abre o painel de configurações:
   balão mais antigo vai embora. Durante uma palavra secreta o limite não vale, senão uma
   palavra maior que ele nunca se formaria.
 - **Palavras secretas** — edite direto no campo, tire com o **✕** e acrescente com
-  **Adicionar** (ou Enter). Só letras e números. Escreva com acento: "Mamãe" se forma
+  **Adicionar** (ou Enter). Letras e números, e espaço entre palavras: "Maria Helena" vale,
+  digitando o espaço também (ele faz um balão em branco, que sobe e vai embora quando a
+  palavra se forma, deixando o vão entre os nomes). Escreva com acento: "Mamãe" se forma
   digitando o ã ou só o a, e quando a palavra se completa os balões passam a mostrar
   **MAMÃE** e a voz fala "Mamãe" certinho. A palavra **SAIR** não entra na lista: ela é
   sempre aceita, porque é a que fecha o brinquedo.
