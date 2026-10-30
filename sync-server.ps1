@@ -5,7 +5,9 @@
 # publicou desde a última vez que perguntou.
 #
 # Também guarda o último período (dia/noite) e a fase da lua à parte, para uma
-# janela aberta depois já nascer no mesmo período da outra.
+# janela aberta depois já nascer no mesmo período da outra. Ele começa sem
+# saber o período: quem decide é a primeira janela que perguntar (ela diz em
+# que período abriu).
 #
 # Se desliga sozinho se ninguém mais consultar por um tempo (assim não fica um
 # processo pendurado depois que o quiosque fecha).
@@ -24,7 +26,9 @@ try {
     exit
 }
 
-$estado = @{ periodo = 'dia'; faseIndex = -1 }
+# periodo $null = ainda não sei. Um 'dia' de fábrica aqui fazia a janela que
+# reabria de noite trocar a lua pelo sol logo ao abrir.
+$estado = @{ periodo = $null; faseIndex = -1 }
 $eventos = New-Object System.Collections.ArrayList
 $seq = 0
 $ultimaAtividade = Get-Date
@@ -89,6 +93,15 @@ while ($true) {
             } catch {
                 # corpo inválido — ignora e responde com o estado atual mesmo assim
             }
+        }
+
+        # a primeira consulta de uma janela traz o período em que ela abriu: se
+        # eu ainda não sei o da sala, passa a valer esse
+        $proposto = $request.QueryString["periodo"]
+        if ($null -eq $estado.periodo -and ($proposto -eq 'dia' -or $proposto -eq 'noite')) {
+            $estado.periodo = $proposto
+            $fase = -1
+            if ([int]::TryParse($request.QueryString["fase"], [ref]$fase)) { $estado.faseIndex = $fase }
         }
 
         # sem "desde", o cliente só quer pegar o número de onde começar a ouvir

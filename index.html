@@ -71,7 +71,7 @@
   #sol.transicionando, #lua.transicionando { transition: top 3s ease-in-out; }
 
   #sol {
-    top: 5vh;
+    top: 5%;
     background: radial-gradient(circle at 40% 35%, #fff8b0, #ffd34d 60%, #ffb327);
     box-shadow: 0 0 60px 24px rgba(255, 214, 92, .45);
     animation: pulsa 6s ease-in-out infinite;
@@ -82,7 +82,7 @@
   }
 
   #lua {
-    top: 92vh;
+    top: 94%;
     overflow: hidden;
     background: radial-gradient(circle at 35% 30%, #fdfdff, #e4e6f2 55%, #c7cbe0 100%);
     box-shadow: 0 0 40px 16px rgba(200, 210, 255, .35);
@@ -470,10 +470,7 @@
       b.alvoY = clamp(b.alvoY, H * 0.30, H * 0.58);
       b.x = clamp(b.x, 80, W - 80);
     }
-    if (!arrastoAlvo && !transicionando) {
-      sol.style.top = (periodo === 'dia'   ? topoCima() : topoBaixo()) + 'px';
-      lua.style.top = (periodo === 'noite' ? topoCima() : topoBaixo()) + 'px';
-    }
+    // sol e lua não precisam de nada aqui: estão em % da altura (ver NO_CEU)
   });
 
   // ------------------------------------------------------------------ som
@@ -1127,11 +1124,21 @@
   const FASES = ['nova', 'crescente', 'cheia', 'minguante'];
   let faseIndex = -1;
 
-  const TOPO_CIMA  = 0.05; // fração da altura da tela — posição no céu
-  const TOPO_BAIXO = 0.94; // fração da altura da tela — escondido atrás do morro
+  const TOPO_CIMA  = 5;  // % da altura da tela — posição no céu
+  const TOPO_BAIXO = 94; // % da altura da tela — escondido atrás do morro
 
-  function topoCima()  { return H * TOPO_CIMA; }
-  function topoBaixo() { return H * TOPO_BAIXO; }
+  // Parados, os astros ficam em % e não em px: o céu ocupa a tela inteira,
+  // então eles acompanham sozinhos qualquer mudança de tamanho da janela (o
+  // quiosque entrando em tela cheia logo depois de abrir, o F11, o botão "Tela
+  // cheia"). Em px, o astro escondido ficava na altura calculada para a janela
+  // antiga — que numa janela maior é acima do morro, e a lua aparecia pela
+  // metade (para sempre, se o redimensionamento caísse no meio de uma virada).
+  const NO_CEU    = TOPO_CIMA + '%';
+  const ESCONDIDO = TOPO_BAIXO + '%';
+
+  // em px, para as contas do arrasto
+  function topoCima()  { return H * TOPO_CIMA / 100; }
+  function topoBaixo() { return H * TOPO_BAIXO / 100; }
 
   (function gerarEstrelas() {
     for (let i = 0; i < 55; i++) {
@@ -1147,8 +1154,8 @@
     }
   })();
 
-  sol.style.top = topoCima() + 'px';
-  lua.style.top = topoBaixo() + 'px';
+  sol.style.top = NO_CEU;
+  lua.style.top = ESCONDIDO;
 
   let periodo = 'dia';    // 'dia' | 'noite'
   let transicionando = false;
@@ -1345,7 +1352,13 @@
   }
 
   function consultaSync() {
-    const url = SYNC_URL + '/eventos' + (cursor == null ? '' : '?desde=' + cursor);
+    // A primeira consulta leva junto o período em que esta tela abriu. Se o
+    // servidor acabou de subir, ele ainda não sabe o da sala, e passa a valer
+    // este — antes ele respondia um 'dia' de fábrica, e a tela que abria de
+    // noite trocava a lua pelo sol na frente da criança.
+    const url = SYNC_URL + '/eventos' + (cursor == null
+      ? '?periodo=' + periodo + '&fase=' + faseIndex
+      : '?desde=' + cursor);
     fetch(url).then(r => r.ok ? r.json() : null).then(dados => {
       if (!dados) return;
       const primeira = cursor == null;
@@ -1353,7 +1366,7 @@
       if (primeira) {
         // janela aberta depois da outra: adota o período que já estava valendo
         if (dados.periodo === 'dia' || dados.periodo === 'noite') {
-          receberSync(dados.periodo, dados.faseIndex);
+          adotaPeriodoDaSala(dados.periodo, dados.faseIndex);
         }
         return;
       }
@@ -1364,6 +1377,39 @@
   function receberSync(novoPeriodo, faseRemota) {
     if (transicionando || novoPeriodo === periodo) return;
     comitarTransicao(novoPeriodo, { origem: 'sync', faseRemota });
+  }
+
+  // Põe o cenário direto num período. Quem chama é que garante as transições
+  // desligadas (classe sem-transicao no <body>): isto não é uma virada.
+  function assentaPeriodo(novoPeriodo, novaFase) {
+    periodo = novoPeriodo;
+    if (novoPeriodo === 'noite') {
+      faseIndex = novaFase;
+      lua.dataset.fase = FASES[faseIndex];
+    }
+    sol.style.top = novoPeriodo === 'dia'   ? NO_CEU : ESCONDIDO;
+    lua.style.top = novoPeriodo === 'noite' ? NO_CEU : ESCONDIDO;
+    ceuNoite.classList.toggle('visivel', novoPeriodo === 'noite');
+    document.body.classList.toggle('noite', novoPeriodo === 'noite');
+  }
+
+  function faseValida(f) { return Number.isInteger(f) && f >= 0 && f < FASES.length; }
+
+  // A sala já tinha período quando esta tela chegou (a outra tela está aberta,
+  // ou fechou há pouco). Se for diferente do que esta abriu, ela passa a ele
+  // na hora, sem a virada de 3 s: para quem acabou de abrir a página, isso não
+  // é a noite chegando — é o estado em que a sala está.
+  function adotaPeriodoDaSala(novoPeriodo, faseRemota) {
+    // a criança já mexeu no sol/lua: o que ela fez vale (e já foi publicado)
+    if (transicionando || arrastoAlvo) return;
+    const fase = faseValida(faseRemota) ? faseRemota : Math.max(faseIndex, 0);
+    if (novoPeriodo === periodo && (periodo === 'dia' || fase === faseIndex)) return;
+
+    document.body.classList.add('sem-transicao');
+    assentaPeriodo(novoPeriodo, fase);
+    void document.body.offsetWidth; // fixa o estado novo com as transições ainda desligadas
+    document.body.classList.remove('sem-transicao');
+    persistirEstado();
   }
 
   if (canalSync) {
@@ -1377,9 +1423,6 @@
     }
   });
 
-  setInterval(consultaSync, SYNC_INTERVALO);
-  consultaSync();
-
   (function aplicarEstadoInicial() {
     let periodoSalvo = null, faseSalva;
     try {
@@ -1389,14 +1432,13 @@
 
     if (periodoSalvo !== 'noite') return;
 
-    periodo = 'noite';
-    faseIndex = Number.isNaN(faseSalva) ? 0 : faseSalva;
-    lua.dataset.fase = FASES[faseIndex];
-    sol.style.top = topoBaixo() + 'px';
-    lua.style.top = topoCima() + 'px';
-    ceuNoite.classList.add('visivel');
-    document.body.classList.add('noite');
+    assentaPeriodo('noite', faseValida(faseSalva) ? faseSalva : 0);
   })();
+
+  // só depois do estado salvo: a primeira consulta conta ao servidor em que
+  // período esta tela abriu
+  setInterval(consultaSync, SYNC_INTERVALO);
+  consultaSync();
 
   // Até aqui o cenário inteiro estava com as transições desligadas (classe no
   // <body>), então abrir a página já de noite mostra a noite pronta no primeiro
@@ -1423,7 +1465,7 @@
     el.classList.add('arrastando');
     arrastoAlvo = el;
     arrastoInicioY = e.clientY;
-    arrastoInicioTop = parseFloat(el.style.top) || topoCima();
+    arrastoInicioTop = el.offsetTop; // onde ele está de fato, mesmo no meio de um deslize
   }
 
   sol.addEventListener('pointerdown', e => iniciaArrasto(sol, e));
@@ -1443,13 +1485,13 @@
     el.classList.remove('arrastando');
     arrastoAlvo = null;
 
-    const topAtual = parseFloat(el.style.top);
+    const topAtual = el.offsetTop;
     const progresso = (topAtual - topoCima()) / (topoBaixo() - topoCima());
 
     if (progresso > 0.5) {
       comitarTransicao(el === sol ? 'noite' : 'dia');
     } else {
-      el.style.top = topoCima() + 'px';
+      el.style.top = NO_CEU;
     }
   }
 
@@ -1466,7 +1508,7 @@
     saindo.classList.add('transicionando');
     entrando.classList.add('transicionando');
 
-    saindo.style.top = topoBaixo() + 'px';
+    saindo.style.top = ESCONDIDO;
 
     if (novoPeriodo === 'noite') {
       faseIndex = origem === 'sync' && !Number.isNaN(faseRemota) && faseRemota !== undefined
@@ -1475,17 +1517,19 @@
       lua.dataset.fase = FASES[faseIndex];
     }
 
-    entrando.style.top = topoCima() + 'px';
+    entrando.style.top = NO_CEU;
     ceuNoite.classList.toggle('visivel', novoPeriodo === 'noite');
     document.body.classList.toggle('noite', novoPeriodo === 'noite');
     if (origem === 'local') somTransicao(novoPeriodo);
 
     periodo = novoPeriodo;
 
-    if (origem === 'local') {
-      persistirEstado();
-      enviaEvento('periodo', { periodo, faseIndex });
-    }
+    // Guarda também a virada que veio da outra tela: no quiosque cada tela tem
+    // seu próprio perfil (e seu próprio localStorage), e só a tela onde a
+    // criança arrastou guardava. A outra reabria no período velho e, ao achar
+    // a sala no novo, trocava o sol pela lua.
+    persistirEstado();
+    if (origem === 'local') enviaEvento('periodo', { periodo, faseIndex });
 
     setTimeout(() => {
       transicionando = false;
