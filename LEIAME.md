@@ -27,6 +27,9 @@ Dois cliques em **`Gerar Executável.bat`**. Ele instala o que faltar e gera, na
 - **`Balões de Letras.exe`** — um arquivo só, que roda sem instalar (dá para levar num pen
   drive). Demora alguns segundos para abrir, porque se descompacta a cada vez.
 
+O ícone (três balões com A, B e C; nos tamanhos pequenos, um balão só) é o `build/icon.ico`,
+desenhado a partir de `build/icone-3-baloes.svg` e `build/icone-1-balao.svg`.
+
 Os dois são independentes do Node.js e desta pasta: dá para copiar para outro computador com
 Windows. As configurações e as vozes baixadas ficam no computador
 (`%APPDATA%\Balões de Letras`), as mesmas do `Abrir Balões.bat`. O Windows pode avisar que o

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Ícone do app nos tamanhos pequenos (16 a 32 px), onde três balões
+       viram borrões: um balão só, ocupando quase todo o quadrado. -->
+  <defs>
+    <linearGradient id="azul" x1="0.33" y1="0.03" x2="0.67" y2="0.97">
+      <stop offset="0" stop-color="hsl(205, 85%, 60%)"/>
+      <stop offset="1" stop-color="hsl(215, 80%, 42%)"/>
+    </linearGradient>
+    <radialGradient id="brilho" cx="0.32" cy="0.26" r="0.42">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <!-- balão de largura 184 com o nó embaixo, centrado em x = 128 -->
+    <path id="corpo" d="M128 6 C253 6 253 158 128 214 C3 158 3 6 128 6 Z"/>
+  </defs>
+  <path d="M128 222 Q 116 238 128 252" fill="none" stroke="#5b6b7a" stroke-width="10" stroke-linecap="round"/>
+  <use href="#corpo" fill="url(#azul)"/>
+  <use href="#corpo" fill="url(#brilho)"/>
+  <path d="M114 226 L142 226 L128 210 Z" fill="hsl(215, 80%, 42%)"/>
+</svg>
